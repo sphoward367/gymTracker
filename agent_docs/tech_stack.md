@@ -1,22 +1,23 @@
 # Tech Stack & Tools
 
 ## Core Framework
-- **React 18** — UI framework (you already know this)
-- **Vite 5** — Build tool + dev server (HMR, fast builds, tree-shaking)
-- **TypeScript** — Strict mode (`"strict": true` in tsconfig.json), no `any` types
+- **React 19** — UI framework (automatic JSX transform — no `import React` needed)
+- **Vite 7** — Build tool + dev server (HMR, fast builds, tree-shaking)
+- **TypeScript 5.9** — Strict mode (`"strict": true` in tsconfig.json), no `any` types
 
 ## Routing
-- **React Router v6**
+- **React Router v7** (library mode — uses BrowserRouter/Routes/Route pattern)
   - Pages directory: `src/pages/`
   - Auth pages: Login.tsx, Signup.tsx
   - Main pages: Home.tsx, ActiveWorkout.tsx, History.tsx, WorkoutDetail.tsx, ExerciseLibrary.tsx, ExerciseDetail.tsx, Profile.tsx
   - Route protection via AuthContext (redirect to /login if not authenticated)
 
 ## Styling
-- **Tailwind CSS 3** — utility-first CSS framework
-  - Dark mode: use `dark:` prefix + `class` strategy in tailwind.config.ts
+- **Tailwind CSS 4** — utility-first CSS framework (CSS-first configuration)
+  - Dark mode: app is dark-first — colours defined as CSS custom properties in `:root`, no `dark:` prefix needed
+  - No `tailwind.config.ts` — Tailwind v4 uses `@theme` block in `src/index.css` instead
   - No inline styles, no CSS modules, no styled-components
-  - All colours via CSS custom properties defined in index.css
+  - All colours via CSS custom properties defined in index.css + registered in `@theme` block
   - Install: `npm install -D tailwindcss @tailwindcss/vite`
   - Add `@import "tailwindcss"` to `src/index.css`
 
@@ -42,7 +43,7 @@ import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
 import { getFirestore, collection, addDoc, getDocs, query, where, orderBy, limit } from 'firebase/firestore';
 ```
 - Document-based NoSQL database
-- Offline persistence via `enablePersistence(db)` — caches in IndexedDB
+- Offline persistence via `initializeFirestore` with `persistentLocalCache` — caches in IndexedDB
 - Install: included in `firebase` package
 
 ### CRITICAL: Use modular imports (v9+), NOT compat
@@ -135,7 +136,7 @@ VITE_FIREBASE_APP_ID=1:123456789:web:abcdef
 // src/lib/firebase.ts
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { getFirestore, enablePersistence } from 'firebase/firestore';
+import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from 'firebase/firestore';
 
 const app = initializeApp({
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -147,10 +148,10 @@ const app = initializeApp({
 });
 
 export const auth = getAuth(app);
-export const db = getFirestore(app);
-
-enablePersistence(db).catch((err) => {
-  console.warn('Firestore persistence error:', err.code);
+export const db = initializeFirestore(app, {
+  localCache: persistentLocalCache({
+    tabManager: persistentMultipleTabManager(),
+  }),
 });
 ```
 

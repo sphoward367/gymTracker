@@ -1,0 +1,115 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default: Deny all access to any path not explicitly allowed
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // User data: all paths under users/{userId}
+    match /users/{userId} {
+
+      function isOwner() {
+        return request.auth != null && request.auth.uid == userId;
+      }
+
+      function userIdUnchanged() {
+        return !('userId' in request.resource.data)
+            || request.resource.data.userId == userId;
+      }
+
+      // --- Profile (the user document itself) ---
+      function isValidProfile() {
+        let data = request.resource.data;
+        return data.displayName is string
+            && data.displayName.size() > 0
+            && data.displayName.size() <= 100
+            && data.email is string
+            && data.email.size() > 0
+            && data.email.size() <= 320;
+      }
+
+      allow read: if isOwner();
+      allow create: if isOwner()
+                    && isValidProfile()
+                    && request.resource.data.userId == userId;
+      allow update: if isOwner()
+                    && isValidProfile()
+                    && userIdUnchanged();
+      allow delete: if false;
+
+      // --- Workouts ---
+      match /workouts/{workoutId} {
+        function isValidWorkout() {
+          let data = request.resource.data;
+          return data.exercises is list
+              && data.exercises.size() > 0
+              && data.startedAt is timestamp
+              && data.durationSeconds is int
+              && data.durationSeconds >= 0;
+        }
+
+        allow read: if isOwner();
+        allow create: if isOwner()
+                      && isValidWorkout()
+                      && userIdUnchanged();
+        allow update: if isOwner()
+                      && isValidWorkout()
+                      && userIdUnchanged();
+        allow delete: if isOwner();
+      }
+
+      // --- Templates ---
+      match /templates/{templateId} {
+        function isValidTemplate() {
+          let data = request.resource.data;
+          return data.name is string
+              && data.name.size() > 0
+              && data.name.size() <= 200
+              && data.exercises is list
+              && data.exercises.size() > 0;
+        }
+
+        allow read: if isOwner();
+        allow create: if isOwner()
+                      && isValidTemplate()
+                      && userIdUnchanged();
+        allow update: if isOwner()
+                      && isValidTemplate()
+                      && userIdUnchanged();
+        allow delete: if isOwner();
+      }
+
+      // --- Personal Records ---
+      match /personalRecords/{recordId} {
+        function isValidPersonalRecord() {
+          let data = request.resource.data;
+          return data.exerciseId is string
+              && data.exerciseId.size() > 0
+              && data.exerciseName is string
+              && data.exerciseName.size() > 0
+              && data.maxWeight is number
+              && data.maxWeight >= 0
+              && data.maxWeightReps is int
+              && data.maxWeightReps >= 0
+              && data.estimated1RM is number
+              && data.estimated1RM >= 0
+              && data.achievedAt is timestamp
+              && data.workoutId is string
+              && data.workoutId.size() > 0;
+        }
+
+        allow read: if isOwner();
+        allow create: if isOwner()
+                      && isValidPersonalRecord()
+                      && userIdUnchanged();
+        allow update: if isOwner()
+                      && isValidPersonalRecord()
+                      && userIdUnchanged();
+        allow delete: if isOwner();
+      }
+    }
+  }
+}

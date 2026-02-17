@@ -3,9 +3,9 @@
 ## Project Overview
 **App:** LiftLog (PWA)
 **Goal:** Mobile-first gym workout tracker with fast set logging (≤15 sec/set), offline-first architecture, and PR tracking — delivered as a Progressive Web App
-**Stack:** React 18 + Vite 5 / TypeScript (strict) / Tailwind CSS / Firebase JS SDK v9+ (Auth + Firestore) / vite-plugin-pwa / React Router v6
+**Stack:** React 19 + Vite 7 / TypeScript 5.9 (strict) / Tailwind CSS 4 / Firebase JS SDK v12+ (Auth + Firestore) / vite-plugin-pwa / React Router v7
 **Deploy:** Vercel (free tier) → Install via Safari "Add to Home Screen"
-**Current Phase:** Phase 1 — Foundation (Day 1)
+**Current Phase:** Phase 2 — Exercise Database (Day 2)
 
 ## How I Should Think
 1. **Understand Intent First**: Before answering, identify what the user actually needs — a new feature, a bug fix, an architecture question, or just an explanation.
@@ -97,31 +97,43 @@ Refer to these for details (load only when needed):
 - Do NOT rely on background JS execution for the timer — use clock-diff recovery
 
 ## Current State (Update This!)
-**Last Updated:** 2026-02-16
-**Working On:** Project initialisation (Day 1)
-**Recently Completed:** Planning phase (PRD + Technical Design + PWA pivot)
-**Blocked By:** None
+**Last Updated:** 2026-02-17
+**Working On:** Phase 2 wrap-up — manual tasks remaining before moving to Phase 3
+**Recently Completed:** Phase 2 — Authentication + Navigation (authService, AuthContext, Login/Signup, Router, BottomNav, Firestore rules, security review, pre-commit hook)
+**Blocked By:** Manual tasks: `firebase deploy --only firestore:rules`, `vercel --prod`, iPhone Safari Add to Home Screen test, git commit
 
 ## Roadmap
 
-### Phase 1: Foundation (Day 1)
-- [ ] Create Vite + React + TypeScript project
-- [ ] Install and configure Tailwind CSS
-- [ ] Install and configure vite-plugin-pwa
-- [ ] Install Firebase JS SDK + React Router
-- [ ] Create `lib/firebase.ts` with Firestore persistence enabled
-- [ ] Create project folder structure (pages, components, services, contexts, types, utils)
-- [ ] Create all TypeScript type files (exercise.ts, workout.ts, user.ts)
-- [ ] Create theme/design tokens (Tailwind config — dark mode colours)
-- [ ] Create AuthContext + authService (Firebase JS SDK)
-- [ ] Build login/signup pages
-- [ ] Create root App.tsx with React Router + auth gate
-- [ ] Create bottom navigation (BottomNav component)
-- [ ] Create placeholder tab pages (Home, Workout, History, Profile)
-- [ ] Deploy Firestore Security Rules
-- [ ] Deploy to Vercel (verify it works)
-- [ ] Test on iPhone Safari: Add to Home Screen
-- [ ] Git commit: `feat(day-1): project setup + auth + navigation + PWA`
+### Phase 1: Foundation (Day 1 — Morning) ✅
+- [x] Create Vite + React + TypeScript project
+- [x] Install and configure Tailwind CSS
+- [x] Install and configure vite-plugin-pwa
+- [x] Install Firebase JS SDK + React Router
+- [x] Create `lib/firebase.ts` with Firestore persistence enabled
+- [x] Create project folder structure (pages, components, services, contexts, types, utils)
+- [x] Create all TypeScript type files (exercise.ts, workout.ts, user.ts)
+- [x] Create theme/design tokens (Tailwind v4 @theme block — dark mode colours)
+
+### Phase 2: Authentication + Navigation (Day 1 — Afternoon)
+**Code: COMPLETE** | **Manual tasks: INCOMPLETE**
+
+- [x] Create AuthContext + authService (Firebase JS SDK v12 modular)
+- [x] Build login/signup pages (with user-friendly error mapping via authErrors utility)
+- [x] Create root App.tsx with React Router v7 + AuthGate/PublicRoute wrappers
+- [x] Create bottom navigation (BottomNav component with SVG icons)
+- [x] Create placeholder tab pages (Home, Workout, History, Profile)
+- [x] Write Firestore Security Rules (owner-only, field validation, default deny)
+- [x] Create firebase.json config
+- [x] Fix deprecated `enableIndexedDbPersistence` → `initializeFirestore` + `persistentLocalCache`
+- [x] Patch .gitignore (added .env and .env.* patterns)
+- [x] Set up pre-commit hook (runs `npx tsc --noEmit` before every commit)
+- [x] Security review completed (error enumeration fix, CSP recommendations noted for Phase 6)
+- [x] Architecture review completed (doc version mismatches fixed across AGENTS.md, tech_stack.md, code_patterns.md, CLAUDE.md)
+- [x] `npx tsc --noEmit` passes with zero errors
+- [ ] **MANUAL:** Deploy Firestore rules (`firebase deploy --only firestore:rules`)
+- [ ] **MANUAL:** Deploy to Vercel (`vercel --prod`) and verify it works
+- [ ] **MANUAL:** Test on iPhone Safari: Add to Home Screen → verify standalone mode
+- [ ] **MANUAL:** Git commit: `feat(day-1): project setup + auth + navigation + PWA`
 
 ### Phase 2: Exercise Database (Day 2)
 - [ ] Download and bundle free-exercise-db as `public/exercises.json`

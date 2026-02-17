@@ -10,8 +10,8 @@
 
 ## Import Order
 ```typescript
-// 1. React
-import React, { useState, useCallback } from 'react';
+// 1. React (no `import React` needed — React 19 automatic JSX transform)
+import { useState, useCallback } from 'react';
 
 // 2. Third-party libraries
 import { useNavigate, useParams } from 'react-router-dom';
@@ -38,7 +38,6 @@ import { formatWeight } from '@/utils/formatters';
 Every component follows this structure:
 
 ```tsx
-import React from 'react';
 import type { WorkoutSet } from '@/types/workout';
 
 interface SetRowProps {
@@ -122,25 +121,22 @@ export function SetRow({ set, previousSet, onComplete, onUpdate }: SetRowProps) 
 }
 ```
 
-```typescript
-// tailwind.config.ts
-export default {
-  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
-  theme: {
-    extend: {
-      colors: {
-        background: 'var(--color-background)',
-        surface: 'var(--color-surface)',
-        'surface-variant': 'var(--color-surface-variant)',
-        primary: 'var(--color-primary)',
-        'on-primary': 'var(--color-on-primary)',
-        'on-background': 'var(--color-on-background)',
-        'on-surface': 'var(--color-on-surface)',
-        'pr-gold': 'var(--color-pr-gold)',
-      },
-    },
-  },
-};
+```css
+/* Tailwind v4: CSS-first config via @theme block in index.css */
+/* No tailwind.config.ts file — colours are registered directly: */
+@theme {
+  --color-background: var(--color-background);
+  --color-surface: var(--color-surface);
+  --color-surface-variant: var(--color-surface-variant);
+  --color-primary: var(--color-primary);
+  --color-on-primary: var(--color-on-primary);
+  --color-on-background: var(--color-on-background);
+  --color-on-surface: var(--color-on-surface);
+  --color-pr-gold: var(--color-pr-gold);
+  --color-error: var(--color-error);
+}
+/* This enables classes like bg-background, text-on-primary, etc. */
+/* No dark: prefix needed — the app is dark-first via :root variables. */
 ```
 
 ### Common Tailwind Patterns
@@ -287,7 +283,7 @@ export const exerciseService = {
 
 ```tsx
 // contexts/AuthContext.tsx
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 import { authService } from '@/services/auth/authService';
 import type { User } from 'firebase/auth';
 
@@ -301,7 +297,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
