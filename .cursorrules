@@ -1,0 +1,51 @@
+# Cursor Rules for LiftLog
+
+## Project Context
+**App:** LiftLog — Mobile gym workout tracker (PWA)
+**Stack:** React 18 + Vite 5 / TypeScript (strict) / Tailwind CSS / Firebase JS SDK v9+ (Auth + Firestore) / vite-plugin-pwa / React Router v6
+**Deploy:** Vercel (free tier)
+**Stage:** MVP Development (7-day sprint)
+**User Level:** In-Between (knows React/TypeScript/Firebase, learning Tailwind)
+
+## Directives
+1. **Master Plan:** Always read `AGENTS.md` first. It contains the current phase, task checklist, and architecture rules.
+2. **Documentation:** Refer to `agent_docs/` for details — load only the file you need.
+3. **Plan-First:** Propose a brief plan and wait for approval before writing code.
+4. **Incremental Build:** One feature at a time. Verify it works before starting the next.
+5. **Pre-Commit:** If hooks exist, run them before commits; fix failures.
+6. **No Linting Role:** Do not act as a linter. Use `npx tsc --noEmit` if needed.
+7. **Communication:** Be concise. Ask clarifying questions when needed.
+
+## Architecture Constraints (Non-Negotiable)
+- Components NEVER call Firestore directly — always use `services/` layer
+- Exercise data access ONLY through `exerciseService` normalisation layer
+- `any` type is FORBIDDEN — use proper types or `unknown` with type guards
+- Use Firebase JS SDK v9+ modular imports — NOT compat SDK
+- Use Tailwind classes — never inline styles
+- Dark mode primary — use Tailwind `dark:` utilities
+- 44×44px minimum touch targets
+- Timer uses clock-diff (Date.now() + visibilitychange) — NOT background notifications
+
+## Code Generation Rules
+- Always include TypeScript types for props, function params, and return values
+- Follow the component pattern in `agent_docs/code_patterns.md`
+- Follow the service pattern in `agent_docs/code_patterns.md`
+- Use `@/` path aliases for imports (configured in vite.config.ts + tsconfig.json)
+- Import order: React → third-party → services → contexts → types → components → utils
+
+## Commands
+```bash
+npm run dev                             # Start dev server
+npm run build                           # Production build
+npx tsc --noEmit                        # Type check
+vercel --prod                           # Deploy
+```
+
+## What NOT To Do
+- Do NOT use Firebase compat SDK — modular v9+ only
+- Do NOT put Firestore calls in components
+- Do NOT add features not in the current AGENTS.md phase
+- Do NOT use `any` type
+- Do NOT use inline styles — Tailwind only
+- Do NOT rely on background JS for timer
+- Do NOT suggest new packages without checking existing deps
