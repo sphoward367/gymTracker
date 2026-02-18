@@ -4,7 +4,7 @@ export default function ActiveWorkout() {
       <div className="px-6">
         <h1 className="text-2xl font-bold">Workout</h1>
         <p className="mt-2 text-on-surface/60">
-          Active workout will appear here.Teestttt
+          Active workout will appear here.
         </p>
       </div>
     </div>

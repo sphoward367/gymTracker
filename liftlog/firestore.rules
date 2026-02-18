@@ -82,6 +82,29 @@ service cloud.firestore {
         allow delete: if isOwner();
       }
 
+      // --- Custom Exercises ---
+      match /exercises/{exerciseId} {
+        function isValidExercise() {
+          let data = request.resource.data;
+          return data.name is string
+              && data.name.size() > 0
+              && data.name.size() <= 100
+              && data.bodyPart is string
+              && data.equipment is string
+              && data.target is string
+              && data.secondaryMuscles is list
+              && data.instructions is list
+              && data.images is list;
+        }
+
+        allow read: if isOwner();
+        allow create: if isOwner()
+                      && isValidExercise();
+        allow update: if isOwner()
+                      && isValidExercise();
+        allow delete: if isOwner();
+      }
+
       // --- Personal Records ---
       match /personalRecords/{recordId} {
         function isValidPersonalRecord() {

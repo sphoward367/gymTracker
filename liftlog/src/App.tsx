@@ -7,6 +7,8 @@ import Home from '@/pages/Home';
 import ActiveWorkout from '@/pages/ActiveWorkout';
 import History from '@/pages/History';
 import Profile from '@/pages/Profile';
+import ExerciseLibrary from '@/pages/ExerciseLibrary';
+import ExerciseDetail from '@/pages/ExerciseDetail';
 import type { ReactNode } from 'react';
 
 function AuthGate({ children }: { children: ReactNode }) {
@@ -91,6 +93,22 @@ export default function App() {
           element={
             <AuthGate>
               <History />
+            </AuthGate>
+          }
+        />
+        <Route
+          path="/exercises"
+          element={
+            <AuthGate>
+              <ExerciseLibrary />
+            </AuthGate>
+          }
+        />
+        <Route
+          path="/exercises/:id"
+          element={
+            <AuthGate>
+              <ExerciseDetail />
             </AuthGate>
           }
         />
