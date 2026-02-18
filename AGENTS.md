@@ -3,9 +3,9 @@
 ## Project Overview
 **App:** LiftLog (PWA)
 **Goal:** Mobile-first gym workout tracker with fast set logging (≤15 sec/set), offline-first architecture, and PR tracking — delivered as a Progressive Web App
-**Stack:** React 18 + Vite 5 / TypeScript (strict) / Tailwind CSS / Firebase JS SDK v9+ (Auth + Firestore) / vite-plugin-pwa / React Router v6
+**Stack:** React 19 + Vite 7 / TypeScript 5.9 (strict) / Tailwind CSS 4 / Firebase JS SDK v12+ (Auth + Firestore) / vite-plugin-pwa / React Router v7
 **Deploy:** Vercel (free tier) → Install via Safari "Add to Home Screen"
-**Current Phase:** Phase 1 — Foundation (Day 1)
+**Current Phase:** Phase 4 — Core Workout Logging (Day 3)
 
 ## How I Should Think
 1. **Understand Intent First**: Before answering, identify what the user actually needs — a new feature, a bug fix, an architecture question, or just an explanation.
@@ -97,51 +97,68 @@ Refer to these for details (load only when needed):
 - Do NOT rely on background JS execution for the timer — use clock-diff recovery
 
 ## Current State (Update This!)
-**Last Updated:** 2026-02-16
-**Working On:** Project initialisation (Day 1)
-**Recently Completed:** Planning phase (PRD + Technical Design + PWA pivot)
-**Blocked By:** None
+**Last Updated:** 2026-02-18
+**Working On:** Phase 4 — Core Workout Logging (Day 3) — manual testing + commit remaining
+**Recently Completed:** Phase 4 code — WorkoutContext, workoutService, prService, calculations, draftStorage, ActiveWorkout page, ExerciseCard, SetRow, AddExerciseModal, WorkoutSummary. Code review fixes applied (idempotent saves, input validation, debounced draft persistence, encapsulated dispatch).
+**Blocked By:** Nothing
 
 ## Roadmap
 
-### Phase 1: Foundation (Day 1)
-- [ ] Create Vite + React + TypeScript project
-- [ ] Install and configure Tailwind CSS
-- [ ] Install and configure vite-plugin-pwa
-- [ ] Install Firebase JS SDK + React Router
-- [ ] Create `lib/firebase.ts` with Firestore persistence enabled
-- [ ] Create project folder structure (pages, components, services, contexts, types, utils)
-- [ ] Create all TypeScript type files (exercise.ts, workout.ts, user.ts)
-- [ ] Create theme/design tokens (Tailwind config — dark mode colours)
-- [ ] Create AuthContext + authService (Firebase JS SDK)
-- [ ] Build login/signup pages
-- [ ] Create root App.tsx with React Router + auth gate
-- [ ] Create bottom navigation (BottomNav component)
-- [ ] Create placeholder tab pages (Home, Workout, History, Profile)
-- [ ] Deploy Firestore Security Rules
-- [ ] Deploy to Vercel (verify it works)
-- [ ] Test on iPhone Safari: Add to Home Screen
-- [ ] Git commit: `feat(day-1): project setup + auth + navigation + PWA`
+### Phase 1: Foundation (Day 1 — Morning) ✅
+- [x] Create Vite + React + TypeScript project
+- [x] Install and configure Tailwind CSS
+- [x] Install and configure vite-plugin-pwa
+- [x] Install Firebase JS SDK + React Router
+- [x] Create `lib/firebase.ts` with Firestore persistence enabled
+- [x] Create project folder structure (pages, components, services, contexts, types, utils)
+- [x] Create all TypeScript type files (exercise.ts, workout.ts, user.ts)
+- [x] Create theme/design tokens (Tailwind v4 @theme block — dark mode colours)
 
-### Phase 2: Exercise Database (Day 2)
-- [ ] Download and bundle free-exercise-db as `public/exercises.json`
-- [ ] Create ExerciseService with normalisation layer
-- [ ] Build searchable exercise list (search bar + filter chips + virtualised list)
-- [ ] Build exercise detail page
-- [ ] Add custom exercise creation form (save to Firestore)
-- [ ] Verify: search exercises → filter → create custom → appears in list
-- [ ] Git commit: `feat(day-2): exercise library + search + custom exercises`
+### Phase 2: Authentication + Navigation (Day 1 — Afternoon)
+**Code: COMPLETE** | **Manual tasks: INCOMPLETE**
 
-### Phase 3: Core Workout Logging (Day 3)
-- [ ] Build WorkoutContext (useReducer for active workout state)
-- [ ] Build workoutService (save, fetch history, get last sets)
-- [ ] Build Active Workout page with ExerciseCard + SetRow components
-- [ ] Implement one-tap set completion with auto-fill from previous session
-- [ ] Implement draft persistence to localStorage (crash recovery)
-- [ ] Verify: start workout → add exercises → log sets ≤15 sec each → finish → saved to Firestore
+- [x] Create AuthContext + authService (Firebase JS SDK v12 modular)
+- [x] Build login/signup pages (with user-friendly error mapping via authErrors utility)
+- [x] Create root App.tsx with React Router v7 + AuthGate/PublicRoute wrappers
+- [x] Create bottom navigation (BottomNav component with SVG icons)
+- [x] Create placeholder tab pages (Home, Workout, History, Profile)
+- [x] Write Firestore Security Rules (owner-only, field validation, default deny)
+- [x] Create firebase.json config
+- [x] Fix deprecated `enableIndexedDbPersistence` → `initializeFirestore` + `persistentLocalCache`
+- [x] Patch .gitignore (added .env and .env.* patterns)
+- [x] Set up pre-commit hook (runs `npx tsc --noEmit` before every commit)
+- [x] Security review completed (error enumeration fix, CSP recommendations noted for Phase 7)
+- [x] Architecture review completed (doc version mismatches fixed across AGENTS.md, tech_stack.md, code_patterns.md, CLAUDE.md)
+- [x] `npx tsc --noEmit` passes with zero errors
+- [ ] **MANUAL:** Deploy Firestore rules (`firebase deploy --only firestore:rules`)
+- [ ] **MANUAL:** Deploy to Vercel (`vercel --prod`) and verify it works
+- [ ] **MANUAL:** Test on iPhone Safari: Add to Home Screen → verify standalone mode
+- [ ] **MANUAL:** Git commit: `feat(day-1): project setup + auth + navigation + PWA`
+
+### Phase 3: Exercise Database (Day 2)
+- [x] Download and bundle free-exercise-db as `public/exercises.json`
+- [x] Create ExerciseService with normalisation layer
+- [x] Build searchable exercise list (search bar + filter chips + virtualised list)
+- [x] Build exercise detail page
+- [x] Add custom exercise creation form (save to Firestore)
+- [x] Verify: search exercises → filter → create custom → appears in list
+- [x] **MANUAL:** Git commit: `feat(day-2): exercise library + search + custom exercises`
+
+### Phase 4: Core Workout Logging (Day 3)
+- [x] Build WorkoutContext (useReducer for active workout state, including live PR tracking)
+- [x] Build workoutService (save, fetch history, get last sets + notes for exercise)
+- [x] Build Active Workout page with ExerciseCard + SetRow components
+- [x] Implement one-tap set completion with auto-fill from previous session
+- [x] Implement set type selection UI on SetRow (working/warmup/dropset/failure chip)
+- [x] Implement per-exercise notes (icon on ExerciseCard → text input; show previous note when exercise is added)
+- [x] Calculate and store `totalVolume` on workout completion (excludes warmup sets)
+- [x] Implement live PR detection — compare each completed set against personalRecords, accumulate `prsAchieved` in WorkoutContext
+- [x] Show subtle PR indicator on ExerciseCard when mid-workout PR is detected
+- [x] Implement draft persistence to localStorage (crash recovery)
+- [ ] Verify: start workout → add exercises → log sets ≤15 sec each → set types work → notes save → volume calculated → PRs detected live → finish → saved to Firestore
 - [ ] Git commit: `feat(day-3): core workout logging`
 
-### Phase 4: Templates + Rest Timer (Day 4)
+### Phase 5: Templates + Rest Timer (Day 4)
 - [ ] Build templateService (CRUD)
 - [ ] "Save as Template" flow after workout completion
 - [ ] "Start from Template" flow on home page
@@ -152,31 +169,33 @@ Refer to these for details (load only when needed):
 - [ ] Verify: save template → start from template → timer works → timer recovers after tab switch
 - [ ] Git commit: `feat(day-4): templates + rest timer`
 
-### Phase 5: History + PR Tracking (Day 5)
-- [ ] Build workout history list (grouped by date, newest first)
-- [ ] Build workout detail page (exercises + sets)
-- [ ] Build per-exercise history view
-- [ ] Build prService (PR detection: max weight, estimated 1RM via Brzycki)
-- [ ] PR detection on workout completion
+### Phase 6: History + PR Tracking (Day 5)
+- [ ] Build workout history list (grouped by date, newest first, showing totalVolume)
+- [ ] Build workout detail page (exercises + sets + notes + set types)
+- [ ] Build per-exercise history view (includes notes from past sessions)
+- [ ] Build prService (PR detection: max weight, estimated 1RM via Brzycki, excludes warmup sets)
+- [ ] PR persistence — update personalRecords on workout completion using `prsAchieved` from WorkoutContext
 - [ ] PRBadge component (celebration UI)
+- [ ] PR celebration summary on workout completion screen (list all PRs from the session)
 - [ ] Display PRs in history and exercise detail
-- [ ] Verify: heavier weight → PR detected → badge shown → visible in history
-- [ ] Git commit: `feat(day-5): workout history + PR tracking`
+- [ ] Volume display in history list and workout detail (totalVolume per session)
+- [ ] Verify: heavier weight → PR detected live during workout → badge shown on completion → visible in history → volume displayed
+- [ ] Git commit: `feat(day-5): workout history + PR tracking + volume`
 
-### Phase 6: Polish + Offline Testing (Day 6)
+### Phase 7: Polish + Offline Testing (Day 6)
 - [ ] Dark mode consistency audit
 - [ ] Empty states for all lists
 - [ ] Loading states for all async operations
 - [ ] Error boundary component
 - [ ] SyncStatus indicator
-- [ ] Format utilities (weight, date, duration)
+- [ ] Format utilities (weight, date, duration, volume)
 - [ ] Airplane mode full test (start workout → log → complete → reconnect → verify sync)
 - [ ] Draft recovery test (refresh page mid-workout → resume)
 - [ ] Timer recovery test (switch tabs → come back → correct time shown)
 - [ ] Test on real iPhone via Vercel URL
 - [ ] Git commit: `feat(day-6): polish + offline verification`
 
-### Phase 7: Deploy + Real-World Test (Day 7)
+### Phase 8: Deploy + Real-World Test (Day 7)
 - [ ] Final Vercel deploy
 - [ ] Install PWA on iPhone (Add to Home Screen)
 - [ ] Complete a real gym workout using only LiftLog
@@ -186,8 +205,8 @@ Refer to these for details (load only when needed):
 - [ ] Git commit + tag: `feat(day-7): production deploy + first workout` → `v0.1.0-mvp`
 
 ### Post-MVP (Week 2–3)
-- [ ] Progress charts (Chart.js or Recharts)
+- [ ] Progress charts (Chart.js or Recharts) — volume over time graph using stored totalVolume
 - [ ] Streak system + calendar heatmap
 - [ ] Body weight logging
-- [ ] Supersets and set tagging (warmup, dropset, failure)
+- [ ] Supersets
 - [ ] Unit switching (kg ↔ lbs)

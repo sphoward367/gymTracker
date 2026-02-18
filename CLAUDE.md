@@ -2,7 +2,7 @@
 
 ## Project Context
 **App:** LiftLog — Mobile gym workout tracker (PWA)
-**Stack:** React 18 + Vite 5 / TypeScript (strict) / Tailwind CSS / Firebase JS SDK v9+ (Auth + Firestore) / vite-plugin-pwa / React Router v6
+**Stack:** React 19 + Vite 7 / TypeScript 5.9 (strict) / Tailwind CSS 4 / Firebase JS SDK v12+ (Auth + Firestore) / vite-plugin-pwa / React Router v7
 **Deploy:** Vercel (free tier)
 **Stage:** MVP Development (7-day sprint)
 **User Level:** In-Between (knows React/TypeScript/Firebase, learning Tailwind)

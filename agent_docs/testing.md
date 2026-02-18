@@ -20,10 +20,11 @@ npm run build
 - Verifies the production build completes without errors
 - Catches: import resolution issues, Vite config problems
 
-### Pre-Commit Hook (Set Up Day 1)
+### Pre-Commit Hook (Set Up Day 1) ✅
 ```bash
-# .git/hooks/pre-commit
+# .git/hooks/pre-commit (INSTALLED)
 #!/bin/sh
+cd liftlog
 npx tsc --noEmit
 if [ $? -ne 0 ]; then
   echo "Type check failed. Fix errors before committing."
@@ -31,7 +32,7 @@ if [ $? -ne 0 ]; then
 fi
 ```
 
-Make executable: `chmod +x .git/hooks/pre-commit`
+Installed and executable at `.git/hooks/pre-commit`.
 
 ## Browser Testing Setup
 
@@ -55,11 +56,12 @@ Make executable: `chmod +x .git/hooks/pre-commit`
 3. Feature works in Chrome DevTools mobile emulation
 4. No console errors or warnings related to the feature
 
-### Day 1: Auth + PWA Setup Verification
+### Day 1: Auth + PWA Setup Verification (Phase 2)
+**Code complete — manual browser testing needed:**
 - [ ] `npm run dev` → opens in browser → no errors
 - [ ] Sign up with new email → user appears in Firebase Console
 - [ ] Sign in with existing email → navigates to home
-- [ ] Wrong password → shows error message (not crash)
+- [ ] Wrong password → shows user-friendly error message (not Firebase error code)
 - [ ] Session persists → refresh page → still logged in
 - [ ] Sign out → redirects to login page
 - [ ] Firestore Security Rules deployed → test unauthorized access fails

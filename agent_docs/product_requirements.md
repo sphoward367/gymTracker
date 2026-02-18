@@ -10,6 +10,9 @@
 - Add exercises from the library
 - Log weight × reps for each set
 - One-tap set completion (auto-fills from previous session)
+- **Set type selection:** tap to mark a set as working, warmup, dropset, or failure
+- **Per-exercise notes:** small notes button per exercise to jot down observations (e.g. "felt easy", "left shoulder tight"). The most recent note is displayed next time the exercise is selected in a future workout.
+- **Total volume:** calculated on workout completion (sets × reps × weight, excluding warmup sets). Stored per workout for history display and future charting.
 - Elapsed time display
 - Finish and save workout
 - **Target:** ≤15 seconds per set logged
@@ -46,11 +49,13 @@
 - Per-exercise history: tap exercise name to see progression over time
 
 ### 6. PR Tracking
-- Auto-detect personal records on workout completion
+- **Live PR detection:** PRs are checked as each set is completed during an active workout — not just on workout completion. A subtle indicator appears on the ExerciseCard when a PR is detected mid-workout.
+- **PR tally during workout:** all PRs detected during a session are collected in `Workout.prsAchieved` and shown as a celebration summary on the workout completion screen.
 - Track: max weight per exercise, estimated 1RM (Brzycki formula)
-- PR celebration UI (gold badge + animation)
+- PR celebration UI (gold badge + animation) on completion screen
 - 1RM formula: `weight × (36 / (37 - reps))` — valid for 1–10 reps
 - PR data stored in `personalRecords/{exerciseId}` subcollection
+- Warmup sets are excluded from PR detection
 
 ### 7. User Authentication
 - Email/password sign-up and sign-in (Firebase Auth JS SDK)
@@ -92,6 +97,7 @@
 |--------|--------|----------------|
 | Personal replacement | 14+ consecutive sessions using LiftLog exclusively | Self-tracking |
 | Logging speed | ≤15 seconds per set | Stopwatch test during real workout |
+| Volume tracking | Every completed workout has a totalVolume value | Check Firestore documents |
 | Workout completion rate | >90% of started workouts finished | Firestore query: completedAt not null |
 | Offline data loss | Zero | Airplane mode → full workout → reconnect → verify |
 | PR detection accuracy | 100% | Compare with manual calculation |
