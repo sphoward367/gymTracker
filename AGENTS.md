@@ -98,8 +98,8 @@ Refer to these for details (load only when needed):
 
 ## Current State (Update This!)
 **Last Updated:** 2026-02-18
-**Working On:** Phase 3 — Core Workout Logging (Day 3)
-**Recently Completed:** Phase 3 — Exercise Database (exerciseService, normalisers, customExerciseService, ExerciseLibrary page, ExerciseDetail page, ExerciseSearch, ExerciseList with virtualisation, CreateExerciseForm, App.tsx routes)
+**Working On:** Phase 4 — Core Workout Logging (Day 3) — manual testing + commit remaining
+**Recently Completed:** Phase 4 code — WorkoutContext, workoutService, prService, calculations, draftStorage, ActiveWorkout page, ExerciseCard, SetRow, AddExerciseModal, WorkoutSummary. Code review fixes applied (idempotent saves, input validation, debounced draft persistence, encapsulated dispatch).
 **Blocked By:** Nothing
 
 ## Roadmap
@@ -145,16 +145,16 @@ Refer to these for details (load only when needed):
 - [x] **MANUAL:** Git commit: `feat(day-2): exercise library + search + custom exercises`
 
 ### Phase 4: Core Workout Logging (Day 3)
-- [ ] Build WorkoutContext (useReducer for active workout state, including live PR tracking)
-- [ ] Build workoutService (save, fetch history, get last sets + notes for exercise)
-- [ ] Build Active Workout page with ExerciseCard + SetRow components
-- [ ] Implement one-tap set completion with auto-fill from previous session
-- [ ] Implement set type selection UI on SetRow (working/warmup/dropset/failure chip)
-- [ ] Implement per-exercise notes (icon on ExerciseCard → text input; show previous note when exercise is added)
-- [ ] Calculate and store `totalVolume` on workout completion (excludes warmup sets)
-- [ ] Implement live PR detection — compare each completed set against personalRecords, accumulate `prsAchieved` in WorkoutContext
-- [ ] Show subtle PR indicator on ExerciseCard when mid-workout PR is detected
-- [ ] Implement draft persistence to localStorage (crash recovery)
+- [x] Build WorkoutContext (useReducer for active workout state, including live PR tracking)
+- [x] Build workoutService (save, fetch history, get last sets + notes for exercise)
+- [x] Build Active Workout page with ExerciseCard + SetRow components
+- [x] Implement one-tap set completion with auto-fill from previous session
+- [x] Implement set type selection UI on SetRow (working/warmup/dropset/failure chip)
+- [x] Implement per-exercise notes (icon on ExerciseCard → text input; show previous note when exercise is added)
+- [x] Calculate and store `totalVolume` on workout completion (excludes warmup sets)
+- [x] Implement live PR detection — compare each completed set against personalRecords, accumulate `prsAchieved` in WorkoutContext
+- [x] Show subtle PR indicator on ExerciseCard when mid-workout PR is detected
+- [x] Implement draft persistence to localStorage (crash recovery)
 - [ ] Verify: start workout → add exercises → log sets ≤15 sec each → set types work → notes save → volume calculated → PRs detected live → finish → saved to Firestore
 - [ ] Git commit: `feat(day-3): core workout logging`
 

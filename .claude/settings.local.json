@@ -4,7 +4,9 @@
       "Bash(npx tsc:*)",
       "Bash(echo:*)",
       "Bash(npm run build:*)",
-      "Bash(node -e:*)"
+      "Bash(node -e:*)",
+      "Write",
+      "Edit"
     ]
   }
 }
