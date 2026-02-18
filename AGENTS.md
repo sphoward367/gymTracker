@@ -145,12 +145,17 @@ Refer to these for details (load only when needed):
 - [ ] Git commit: `feat(day-2): exercise library + search + custom exercises`
 
 ### Phase 3: Core Workout Logging (Day 3)
-- [ ] Build WorkoutContext (useReducer for active workout state)
-- [ ] Build workoutService (save, fetch history, get last sets)
+- [ ] Build WorkoutContext (useReducer for active workout state, including live PR tracking)
+- [ ] Build workoutService (save, fetch history, get last sets + notes for exercise)
 - [ ] Build Active Workout page with ExerciseCard + SetRow components
 - [ ] Implement one-tap set completion with auto-fill from previous session
+- [ ] Implement set type selection UI on SetRow (working/warmup/dropset/failure chip)
+- [ ] Implement per-exercise notes (icon on ExerciseCard → text input; show previous note when exercise is added)
+- [ ] Calculate and store `totalVolume` on workout completion (excludes warmup sets)
+- [ ] Implement live PR detection — compare each completed set against personalRecords, accumulate `prsAchieved` in WorkoutContext
+- [ ] Show subtle PR indicator on ExerciseCard when mid-workout PR is detected
 - [ ] Implement draft persistence to localStorage (crash recovery)
-- [ ] Verify: start workout → add exercises → log sets ≤15 sec each → finish → saved to Firestore
+- [ ] Verify: start workout → add exercises → log sets ≤15 sec each → set types work → notes save → volume calculated → PRs detected live → finish → saved to Firestore
 - [ ] Git commit: `feat(day-3): core workout logging`
 
 ### Phase 4: Templates + Rest Timer (Day 4)
@@ -165,15 +170,17 @@ Refer to these for details (load only when needed):
 - [ ] Git commit: `feat(day-4): templates + rest timer`
 
 ### Phase 5: History + PR Tracking (Day 5)
-- [ ] Build workout history list (grouped by date, newest first)
-- [ ] Build workout detail page (exercises + sets)
-- [ ] Build per-exercise history view
-- [ ] Build prService (PR detection: max weight, estimated 1RM via Brzycki)
-- [ ] PR detection on workout completion
+- [ ] Build workout history list (grouped by date, newest first, showing totalVolume)
+- [ ] Build workout detail page (exercises + sets + notes + set types)
+- [ ] Build per-exercise history view (includes notes from past sessions)
+- [ ] Build prService (PR detection: max weight, estimated 1RM via Brzycki, excludes warmup sets)
+- [ ] PR persistence — update personalRecords on workout completion using `prsAchieved` from WorkoutContext
 - [ ] PRBadge component (celebration UI)
+- [ ] PR celebration summary on workout completion screen (list all PRs from the session)
 - [ ] Display PRs in history and exercise detail
-- [ ] Verify: heavier weight → PR detected → badge shown → visible in history
-- [ ] Git commit: `feat(day-5): workout history + PR tracking`
+- [ ] Volume display in history list and workout detail (totalVolume per session)
+- [ ] Verify: heavier weight → PR detected live during workout → badge shown on completion → visible in history → volume displayed
+- [ ] Git commit: `feat(day-5): workout history + PR tracking + volume`
 
 ### Phase 6: Polish + Offline Testing (Day 6)
 - [ ] Dark mode consistency audit
@@ -181,7 +188,7 @@ Refer to these for details (load only when needed):
 - [ ] Loading states for all async operations
 - [ ] Error boundary component
 - [ ] SyncStatus indicator
-- [ ] Format utilities (weight, date, duration)
+- [ ] Format utilities (weight, date, duration, volume)
 - [ ] Airplane mode full test (start workout → log → complete → reconnect → verify sync)
 - [ ] Draft recovery test (refresh page mid-workout → resume)
 - [ ] Timer recovery test (switch tabs → come back → correct time shown)
@@ -198,8 +205,8 @@ Refer to these for details (load only when needed):
 - [ ] Git commit + tag: `feat(day-7): production deploy + first workout` → `v0.1.0-mvp`
 
 ### Post-MVP (Week 2–3)
-- [ ] Progress charts (Chart.js or Recharts)
+- [ ] Progress charts (Chart.js or Recharts) — volume over time graph using stored totalVolume
 - [ ] Streak system + calendar heatmap
 - [ ] Body weight logging
-- [ ] Supersets and set tagging (warmup, dropset, failure)
+- [ ] Supersets
 - [ ] Unit switching (kg ↔ lbs)

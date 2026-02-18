@@ -15,6 +15,17 @@ export interface WorkoutExercise {
   exerciseName: string;
   sets: WorkoutSet[];
   restDuration: number;
+  notes?: string;
+}
+
+/** PR detected during a workout session */
+export interface WorkoutPR {
+  exerciseId: string;
+  exerciseName: string;
+  previousWeight: number;
+  newWeight: number;
+  reps: number;
+  estimated1RM: number;
 }
 
 export interface Workout {
@@ -26,6 +37,8 @@ export interface Workout {
   startedAt: Timestamp | Date;
   completedAt?: Timestamp | Date;
   durationSeconds: number;
+  totalVolume: number;
+  prsAchieved: WorkoutPR[];
 }
 
 export interface Template {

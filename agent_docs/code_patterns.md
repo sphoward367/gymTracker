@@ -426,24 +426,89 @@ export const draftStorage = {
 };
 ```
 
-## PR Detection (Brzycki Formula) — NO CHANGE
+## Volume Calculation
 
 ```typescript
-// utils/calculations.ts — identical to native version
+// utils/calculations.ts
+
+import type { WorkoutSet, WorkoutExercise } from '@/types/workout';
+
+/** Volume for a single set (weight × reps). Only counts completed working/dropset/failure sets. */
+export function setVolume(weight: number, reps: number): number {
+  return weight * reps;
+}
+
+/** Volume for one exercise across all its completed sets (excludes warmup sets). */
+export function exerciseVolume(exercise: WorkoutExercise): number {
+  return exercise.sets
+    .filter((s) => s.completed && s.type !== 'warmup')
+    .reduce((sum, s) => sum + s.weight * s.reps, 0);
+}
+
+/** Total volume for an entire workout (sum of all exercise volumes). */
+export function workoutVolume(exercises: WorkoutExercise[]): number {
+  return exercises.reduce((sum, ex) => sum + exerciseVolume(ex), 0);
+}
+```
+
+Call `workoutVolume(workout.exercises)` when finishing a workout and store the result in `Workout.totalVolume`. This pre-computed value enables fast history display and future volume-over-time charting without re-scanning all sets.
+
+## PR Detection (Brzycki Formula)
+
+```typescript
+// utils/calculations.ts
 export function estimatedOneRepMax(weight: number, reps: number): number {
   if (reps <= 0 || reps > 10) return weight;
   if (reps === 1) return weight;
   return weight * (36 / (37 - reps));
 }
+```
 
-export function setVolume(weight: number, reps: number): number {
-  return weight * reps;
+### Live PR Detection During Workout
+
+PRs are checked **as each set is completed** during an active workout — not just on workout completion. The WorkoutContext compares each completed set against the user's `personalRecords` and maintains a running `prsAchieved: WorkoutPR[]` array. This enables:
+- A subtle PR indicator on the ExerciseCard when a PR is detected mid-workout
+- A celebration summary on the workout completion screen showing all PRs from the session
+
+```typescript
+// Pattern for live PR check (inside WorkoutContext or a helper)
+import type { WorkoutPR, WorkoutSet } from '@/types/workout';
+import type { PersonalRecord } from '@/types/workout';
+
+function checkSetForPR(
+  exerciseId: string,
+  exerciseName: string,
+  set: WorkoutSet,
+  currentPR: PersonalRecord | null,
+): WorkoutPR | null {
+  if (!set.completed || set.type === 'warmup') return null;
+  const newWeight = set.weight;
+  const previousWeight = currentPR?.maxWeight ?? 0;
+  if (newWeight > previousWeight) {
+    return {
+      exerciseId,
+      exerciseName,
+      previousWeight,
+      newWeight,
+      reps: set.reps,
+      estimated1RM: estimatedOneRepMax(newWeight, set.reps),
+    };
+  }
+  return null;
 }
 ```
 
-## TypeScript Interfaces — NO CHANGE
+## Per-Exercise Notes
 
-All types in `src/types/` are identical to the native version. Exercise, Workout, WorkoutSet, WorkoutExercise, Template, PersonalRecord, UserProfile — see the Tech Design for exact interfaces.
+`WorkoutExercise.notes` is an optional string that lets users jot down notes per exercise during a workout (e.g. "felt easy", "left shoulder tight"). When the same exercise is selected in a future workout, display the most recent note from `workoutService.getLastSetsForExercise()` as a reference above the sets.
+
+## Set Type Selection
+
+`WorkoutSet.type` supports `'working' | 'warmup' | 'dropset' | 'failure'`. The SetRow component includes a tappable set-type chip that cycles through types or opens a small picker. Warmup sets are excluded from volume calculations and PR detection.
+
+## TypeScript Interfaces
+
+All types in `src/types/`. Exercise, Workout, WorkoutSet, WorkoutExercise, WorkoutPR, Template, PersonalRecord, UserProfile — see `types/workout.ts` for the canonical definitions.
 
 ## Naming Conventions
 - **Variables / functions:** camelCase — `workoutService`, `handleSaveWorkout`
