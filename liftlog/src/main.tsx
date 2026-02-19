@@ -4,13 +4,26 @@ import './index.css';
 import App from './App';
 import { AuthProvider } from './contexts/AuthContext';
 import { WorkoutProvider } from './contexts/WorkoutContext';
+import { TimerProvider } from '@/contexts/TimerContext';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
-createRoot(document.getElementById('root')!).render(
+const rootElement = document.getElementById('root');
+if (!rootElement) {
+  throw new Error(
+    'Root element #root not found. Check that index.html contains <div id="root">.',
+  );
+}
+
+createRoot(rootElement).render(
   <StrictMode>
-    <AuthProvider>
-      <WorkoutProvider>
-        <App />
-      </WorkoutProvider>
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <WorkoutProvider>
+          <TimerProvider>
+            <App />
+          </TimerProvider>
+        </WorkoutProvider>
+      </AuthProvider>
+    </ErrorBoundary>
   </StrictMode>,
 );

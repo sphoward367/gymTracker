@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { SyncStatus } from '@/components/SyncStatus';
 import { BottomNav } from '@/components/navigation/BottomNav';
 import Login from '@/pages/Login';
 import Signup from '@/pages/Signup';
@@ -9,18 +10,27 @@ import History from '@/pages/History';
 import Profile from '@/pages/Profile';
 import ExerciseLibrary from '@/pages/ExerciseLibrary';
 import ExerciseDetail from '@/pages/ExerciseDetail';
+import WorkoutDetail from '@/pages/WorkoutDetail';
+import CreateTemplate from '@/pages/CreateTemplate';
 import type { ReactNode } from 'react';
+
+/** Shared full-screen loading spinner shown while Firebase resolves auth state. */
+function AuthLoadingScreen() {
+  return (
+    <div
+      className="flex min-h-screen items-center justify-center bg-background"
+      aria-busy="true"
+      aria-label="Checking authentication…"
+    >
+      <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+    </div>
+  );
+}
 
 function AuthGate({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth();
 
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-      </div>
-    );
-  }
+  if (loading) return <AuthLoadingScreen />;
 
   if (!user) {
     return <Navigate to="/login" replace />;
@@ -37,13 +47,7 @@ function AuthGate({ children }: { children: ReactNode }) {
 function PublicRoute({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth();
 
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-      </div>
-    );
-  }
+  if (loading) return <AuthLoadingScreen />;
 
   if (user) {
     return <Navigate to="/" replace />;
@@ -55,6 +59,7 @@ function PublicRoute({ children }: { children: ReactNode }) {
 export default function App() {
   return (
     <BrowserRouter>
+      <SyncStatus />
       <Routes>
         <Route
           path="/login"
@@ -109,6 +114,22 @@ export default function App() {
           element={
             <AuthGate>
               <ExerciseDetail />
+            </AuthGate>
+          }
+        />
+        <Route
+          path="/templates/new"
+          element={
+            <AuthGate>
+              <CreateTemplate />
+            </AuthGate>
+          }
+        />
+        <Route
+          path="/history/:id"
+          element={
+            <AuthGate>
+              <WorkoutDetail />
             </AuthGate>
           }
         />

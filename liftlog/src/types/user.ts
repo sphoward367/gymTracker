@@ -10,3 +10,11 @@ export interface UserProfile {
   defaultRestDuration: number;
   createdAt: Timestamp | Date;
 }
+
+export interface BodyWeightEntry {
+  /** ISO date string "YYYY-MM-DD" — also used as Firestore document ID */
+  date: string;
+  weight: number;
+  userId: string;
+  loggedAt: Timestamp | Date;
+}
