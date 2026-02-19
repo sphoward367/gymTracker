@@ -28,6 +28,8 @@ export interface WorkoutState {
   startedAt: Date | null;
   prsAchieved: WorkoutPR[];
   personalRecords: Map<string, PersonalRecord>;
+  templateId?: string;
+  templateName?: string;
 }
 
 const initialState: WorkoutState = {
@@ -44,7 +46,7 @@ const initialState: WorkoutState = {
 // ---------------------------------------------------------------------------
 
 type WorkoutAction =
-  | { type: 'START_WORKOUT' }
+  | { type: 'START_WORKOUT'; payload?: { templateId?: string; templateName?: string } }
   | {
       type: 'ADD_EXERCISE';
       payload: {
@@ -132,6 +134,8 @@ function workoutReducer(state: WorkoutState, action: WorkoutAction): WorkoutStat
         startedAt: new Date(),
         exercises: [],
         prsAchieved: [],
+        templateId: action.payload?.templateId,
+        templateName: action.payload?.templateName,
       };
 
     case 'ADD_EXERCISE': {
@@ -194,7 +198,10 @@ function workoutReducer(state: WorkoutState, action: WorkoutAction): WorkoutStat
       const set = exercise.sets[setIndex];
       if (!set) return state;
 
-      const completedSet: WorkoutSet = { ...set, completed: true };
+      // Prevent completing a set with 0 reps — allow toggling off if already completed
+      if (!set.completed && set.reps <= 0) return state;
+
+      const completedSet: WorkoutSet = { ...set, completed: !set.completed };
 
       // Check for PR
       const currentPR = state.personalRecords.get(exercise.exerciseId);
@@ -286,6 +293,8 @@ function workoutReducer(state: WorkoutState, action: WorkoutAction): WorkoutStat
       return {
         ...initialState,
         personalRecords: state.personalRecords,
+        templateId: undefined,
+        templateName: undefined,
       };
 
     case 'RESTORE_DRAFT':
@@ -309,7 +318,7 @@ function workoutReducer(state: WorkoutState, action: WorkoutAction): WorkoutStat
 
 interface WorkoutContextType {
   state: WorkoutState;
-  startWorkout: () => void;
+  startWorkout: (templateId?: string, templateName?: string) => void;
   addExercise: (
     exerciseId: string,
     exerciseName: string,
@@ -408,8 +417,13 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
 
   // -- Action creators -------------------------------------------------------
 
-  const startWorkout = useCallback(() => {
-    dispatch({ type: 'START_WORKOUT' });
+  const startWorkout = useCallback((templateId?: string, templateName?: string) => {
+    dispatch({
+      type: 'START_WORKOUT',
+      payload: templateId !== undefined || templateName !== undefined
+        ? { templateId, templateName }
+        : undefined,
+    });
   }, []);
 
   const addExercise = useCallback(
@@ -495,6 +509,8 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
         user.uid,
         {
           userId: user.uid,
+          templateId: state.templateId,
+          templateName: state.templateName,
           exercises: state.exercises,
           startedAt: state.startedAt,
           durationSeconds,
@@ -531,7 +547,7 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
       // We don't dispatch RESET so the workout data is preserved
       throw err;
     }
-  }, [user, state.workoutId, state.startedAt, state.exercises, state.prsAchieved]);
+  }, [user, state.workoutId, state.startedAt, state.exercises, state.prsAchieved, state.templateId, state.templateName]);
 
   const cancelWorkout = useCallback(() => {
     draftStorage.clearDraft();

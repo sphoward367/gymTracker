@@ -67,3 +67,11 @@ export interface PersonalRecord {
   achievedAt: Timestamp | Date;
   workoutId: string;
 }
+
+/** History entry for a single exercise across past workouts — returned by workoutService.getExerciseHistory() */
+export interface ExerciseHistoryEntry {
+  workoutId: string;
+  startedAt: Date;
+  sets: WorkoutSet[];
+  notes?: string;
+}

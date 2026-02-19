@@ -5,7 +5,11 @@ import type { Exercise } from '@/types/exercise';
 interface ExerciseListProps {
   exercises: Exercise[];
   loading: boolean;
+  /** Primary action — adds to workout (modal) or navigates to detail (library) */
   onExercisePress: (exercise: Exercise) => void;
+  /** Optional secondary action. When provided, the row body fires onExercisePress
+   *  and a separate info button fires onExerciseInfoPress. */
+  onExerciseInfoPress?: (exercise: Exercise) => void;
 }
 
 const ROW_HEIGHT = 64;
@@ -15,6 +19,7 @@ export function ExerciseList({
   exercises,
   loading,
   onExercisePress,
+  onExerciseInfoPress,
 }: ExerciseListProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [scrollTop, setScrollTop] = useState(0);
@@ -95,34 +100,81 @@ export function ExerciseList({
       <div style={{ height: totalHeight, position: 'relative' }}>
         {visibleExercises.map((exercise, i) => {
           const index = startIndex + i;
+          const rowStyle = { top: index * ROW_HEIGHT, height: ROW_HEIGHT };
+
+          const exerciseContent = (
+            <div className="flex flex-1 flex-col gap-0.5 overflow-hidden">
+              <span className="truncate text-sm font-medium text-on-surface">
+                {exercise.name}
+              </span>
+              <div className="flex items-center gap-2">
+                <span className="rounded bg-surface-variant px-2 py-0.5 text-xs text-zinc-400">
+                  {exercise.bodyPart}
+                </span>
+                <span className="rounded bg-surface-variant px-2 py-0.5 text-xs text-zinc-400">
+                  {exercise.equipment}
+                </span>
+                {exercise.isCustom && (
+                  <span className="rounded bg-primary/20 px-2 py-0.5 text-xs text-primary">
+                    Custom
+                  </span>
+                )}
+              </div>
+            </div>
+          );
+
+          // Split mode: row body = add to workout, info button = navigate to detail
+          if (onExerciseInfoPress) {
+            return (
+              <div
+                key={exercise.id}
+                className="absolute left-0 right-0 flex items-center border-b border-zinc-800/50"
+                style={rowStyle}
+              >
+                <button
+                  type="button"
+                  onClick={() => onExercisePress(exercise)}
+                  className="flex flex-1 items-center gap-3 overflow-hidden px-4 h-full text-left active:bg-surface-variant/50 transition-colors"
+                  aria-label={`Add ${exercise.name} to workout`}
+                >
+                  {exerciseContent}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onExerciseInfoPress(exercise)}
+                  className="flex min-h-11 min-w-11 shrink-0 items-center justify-center px-3 text-zinc-600 active:text-zinc-300 transition-colors"
+                  aria-label={`View ${exercise.name} details`}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="8" x2="12" y2="12" />
+                    <line x1="12" y1="16" x2="12.01" y2="16" />
+                  </svg>
+                </button>
+              </div>
+            );
+          }
+
+          // Single mode: whole row navigates to detail (library)
           return (
             <button
               key={exercise.id}
+              type="button"
               onClick={() => onExercisePress(exercise)}
-              className="absolute left-0 right-0 flex items-center gap-3 border-b border-zinc-800/50 px-4 min-h-[44px] text-left active:bg-surface-variant/50 transition-colors"
-              style={{
-                top: index * ROW_HEIGHT,
-                height: ROW_HEIGHT,
-              }}
+              className="absolute left-0 right-0 flex items-center gap-3 border-b border-zinc-800/50 px-4 min-h-11 text-left active:bg-surface-variant/50 transition-colors"
+              style={rowStyle}
             >
-              <div className="flex flex-1 flex-col gap-0.5 overflow-hidden">
-                <span className="truncate text-sm font-medium text-on-surface">
-                  {exercise.name}
-                </span>
-                <div className="flex items-center gap-2">
-                  <span className="rounded bg-surface-variant px-2 py-0.5 text-xs text-zinc-400">
-                    {exercise.bodyPart}
-                  </span>
-                  <span className="rounded bg-surface-variant px-2 py-0.5 text-xs text-zinc-400">
-                    {exercise.equipment}
-                  </span>
-                  {exercise.isCustom && (
-                    <span className="rounded bg-primary/20 px-2 py-0.5 text-xs text-primary">
-                      Custom
-                    </span>
-                  )}
-                </div>
-              </div>
+              {exerciseContent}
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="16"

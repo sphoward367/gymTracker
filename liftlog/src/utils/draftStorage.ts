@@ -1,4 +1,5 @@
 import type { WorkoutExercise, WorkoutPR } from '@/types/workout';
+import type { TimerState } from '@/types/timer';
 
 /**
  * Serializable version of WorkoutState for localStorage persistence.
@@ -11,6 +12,8 @@ interface SerializableDraft {
   startedAt: string | null;
   prsAchieved: WorkoutPR[];
   personalRecords: Array<[string, SerializablePersonalRecord]>;
+  templateId?: string;
+  templateName?: string;
 }
 
 interface SerializablePersonalRecord {
@@ -25,6 +28,19 @@ interface SerializablePersonalRecord {
 }
 
 const DRAFT_KEY = 'liftlog_draft_workout';
+const TIMER_KEY = 'liftlog_timer_state';
+
+function isTimerState(data: unknown): data is TimerState {
+  if (typeof data !== 'object' || data === null) return false;
+  const d = data as Record<string, unknown>;
+  return (
+    typeof d['isRunning'] === 'boolean' &&
+    typeof d['remaining'] === 'number' &&
+    typeof d['totalDuration'] === 'number' &&
+    (d['startedAt'] === null || typeof d['startedAt'] === 'number') &&
+    typeof d['exerciseId'] === 'string'
+  );
+}
 
 function isSerializableDraft(data: unknown): data is SerializableDraft {
   if (typeof data !== 'object' || data === null) return false;
@@ -55,6 +71,8 @@ export const draftStorage = {
       achievedAt: Date | { toDate: () => Date };
       workoutId: string;
     }>;
+    templateId?: string;
+    templateName?: string;
   }): void {
     const serializable: SerializableDraft = {
       status: state.status,
@@ -62,6 +80,8 @@ export const draftStorage = {
       exercises: state.exercises,
       startedAt: state.startedAt ? state.startedAt.toISOString() : null,
       prsAchieved: state.prsAchieved,
+      templateId: state.templateId,
+      templateName: state.templateName,
       personalRecords: Array.from(state.personalRecords.entries()).map(
         ([key, pr]) => [
           key,
@@ -104,6 +124,8 @@ export const draftStorage = {
       achievedAt: Date;
       workoutId: string;
     }>;
+    templateId?: string;
+    templateName?: string;
   } | null {
     try {
       const raw = localStorage.getItem(DRAFT_KEY);
@@ -118,6 +140,8 @@ export const draftStorage = {
         exercises: parsed.exercises,
         startedAt: parsed.startedAt ? new Date(parsed.startedAt) : null,
         prsAchieved: parsed.prsAchieved,
+        templateId: parsed.templateId,
+        templateName: parsed.templateName,
         personalRecords: new Map(
           parsed.personalRecords.map(([key, pr]) => [
             key,
@@ -142,6 +166,34 @@ export const draftStorage = {
   clearDraft(): void {
     try {
       localStorage.removeItem(DRAFT_KEY);
+    } catch {
+      // fail silently
+    }
+  },
+
+  saveTimer(state: TimerState): void {
+    try {
+      localStorage.setItem(TIMER_KEY, JSON.stringify(state));
+    } catch {
+      // localStorage may be full or unavailable; fail silently
+    }
+  },
+
+  loadTimer(): TimerState | null {
+    try {
+      const raw = localStorage.getItem(TIMER_KEY);
+      if (!raw) return null;
+      const parsed: unknown = JSON.parse(raw);
+      if (!isTimerState(parsed)) return null;
+      return parsed;
+    } catch {
+      return null;
+    }
+  },
+
+  clearTimer(): void {
+    try {
+      localStorage.removeItem(TIMER_KEY);
     } catch {
       // fail silently
     }

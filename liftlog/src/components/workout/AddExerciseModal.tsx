@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import { exerciseService } from '@/services/exercises/exerciseService';
 import { useAuth } from '@/contexts/AuthContext';
@@ -18,11 +19,35 @@ export function AddExerciseModal({
   onClose,
 }: AddExerciseModalProps) {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedBodyPart, setSelectedBodyPart] = useState<string | null>(null);
+  const [bodyParts, setBodyParts] = useState<string[]>([]);
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Search exercises when query changes
+  // Load body part filter options once on first open
+  useEffect(() => {
+    if (!visible) return;
+
+    let cancelled = false;
+
+    async function loadBodyParts() {
+      try {
+        const parts = await exerciseService.getBodyParts(user?.uid);
+        if (!cancelled) setBodyParts(parts);
+      } catch (err) {
+        console.error('Failed to load body parts:', err);
+      }
+    }
+
+    void loadBodyParts();
+    return () => {
+      cancelled = true;
+    };
+  }, [visible, user?.uid]);
+
+  // Search exercises when query or filter changes
   useEffect(() => {
     if (!visible) return;
 
@@ -31,11 +56,8 @@ export function AddExerciseModal({
     async function searchExercises() {
       setLoading(true);
       try {
-        const results = await exerciseService.search(
-          searchQuery,
-          undefined,
-          user?.uid,
-        );
+        const filters = selectedBodyPart ? { bodyPart: selectedBodyPart } : undefined;
+        const results = await exerciseService.search(searchQuery, filters, user?.uid);
         if (!cancelled) setExercises(results);
       } catch (err) {
         console.error('Failed to search exercises:', err);
@@ -48,12 +70,13 @@ export function AddExerciseModal({
     return () => {
       cancelled = true;
     };
-  }, [searchQuery, visible, user?.uid]);
+  }, [searchQuery, selectedBodyPart, visible, user?.uid]);
 
-  // Reset search when modal opens
+  // Reset state when modal opens
   useEffect(() => {
     if (visible) {
       setSearchQuery('');
+      setSelectedBodyPart(null);
     }
   }, [visible]);
 
@@ -65,6 +88,20 @@ export function AddExerciseModal({
     [onSelect, onClose],
   );
 
+  const handleViewDetail = useCallback(
+    (exercise: Exercise) => {
+      // Workout state is preserved in context + localStorage draft
+      // User can navigate back to /workout to resume
+      onClose();
+      navigate(`/exercises/${exercise.id}`);
+    },
+    [navigate, onClose],
+  );
+
+  const handleFilterPress = useCallback((bodyPart: string) => {
+    setSelectedBodyPart((prev) => (prev === bodyPart ? null : bodyPart));
+  }, []);
+
   if (!visible) return null;
 
   return (
@@ -75,7 +112,7 @@ export function AddExerciseModal({
         <button
           type="button"
           onClick={onClose}
-          className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-zinc-400 active:text-on-surface transition-colors"
+          className="flex min-h-11 min-w-11 items-center justify-center rounded-lg text-zinc-400 active:text-on-surface transition-colors"
           aria-label="Close"
         >
           <svg
@@ -96,15 +133,36 @@ export function AddExerciseModal({
       </div>
 
       {/* Search */}
-      <div className="px-4 pb-3">
+      <div className="px-4 pb-2">
         <ExerciseSearch value={searchQuery} onChange={setSearchQuery} />
       </div>
 
-      {/* Exercise list */}
+      {/* Body part filter chips */}
+      {bodyParts.length > 0 && (
+        <div className="flex gap-2 overflow-x-auto px-4 pb-3 scrollbar-none">
+          {bodyParts.map((part) => (
+            <button
+              key={part}
+              type="button"
+              onClick={() => handleFilterPress(part)}
+              className={`min-h-11 shrink-0 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+                selectedBodyPart === part
+                  ? 'bg-primary text-on-primary'
+                  : 'bg-surface-variant text-on-surface'
+              }`}
+            >
+              {part}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Exercise list — tap row to add, tap ⓘ to view detail */}
       <ExerciseList
         exercises={exercises}
         loading={loading}
         onExercisePress={handleSelect}
+        onExerciseInfoPress={handleViewDetail}
       />
     </div>
   );

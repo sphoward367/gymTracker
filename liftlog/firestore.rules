@@ -105,6 +105,26 @@ service cloud.firestore {
         allow delete: if isOwner();
       }
 
+      // --- Body Weight ---
+      match /bodyWeight/{dateId} {
+        function isValidBodyWeight() {
+          let data = request.resource.data;
+          return data.weight is number
+              && data.weight > 0
+              && data.weight <= 500
+              && data.userId is string;
+        }
+
+        allow read: if isOwner();
+        allow create: if isOwner()
+                      && isValidBodyWeight()
+                      && userIdUnchanged();
+        allow update: if isOwner()
+                      && isValidBodyWeight()
+                      && userIdUnchanged();
+        allow delete: if isOwner();
+      }
+
       // --- Personal Records ---
       match /personalRecords/{recordId} {
         function isValidPersonalRecord() {

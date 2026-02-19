@@ -9,6 +9,7 @@ interface WorkoutSummaryProps {
   prsAchieved: WorkoutPR[];
   onSave: () => Promise<void>;
   onDiscard: () => void;
+  onSaveAsTemplate?: (name: string) => Promise<void>;
 }
 
 function formatDuration(seconds: number): string {
@@ -36,9 +37,16 @@ export function WorkoutSummary({
   prsAchieved,
   onSave,
   onDiscard,
+  onSaveAsTemplate,
 }: WorkoutSummaryProps) {
   const [saving, setSaving] = useState(false);
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
+
+  // Save as template state
+  const [templateName, setTemplateName] = useState('');
+  const [showTemplateSave, setShowTemplateSave] = useState(false);
+  const [savingTemplate, setSavingTemplate] = useState(false);
+  const [templateSaved, setTemplateSaved] = useState(false);
 
   const totalSetsCompleted = exercises.reduce(
     (sum, ex) => sum + ex.sets.filter((s) => s.completed).length,
@@ -62,6 +70,20 @@ export function WorkoutSummary({
     }
     onDiscard();
   }, [showDiscardConfirm, onDiscard]);
+
+  const handleSaveTemplate = useCallback(async () => {
+    if (!templateName.trim() || !onSaveAsTemplate) return;
+    setSavingTemplate(true);
+    try {
+      await onSaveAsTemplate(templateName.trim());
+      setTemplateSaved(true);
+      setShowTemplateSave(false);
+    } catch (err) {
+      console.error('Failed to save template:', err);
+    } finally {
+      setSavingTemplate(false);
+    }
+  }, [templateName, onSaveAsTemplate]);
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background px-6 pb-20">
@@ -160,6 +182,76 @@ export function WorkoutSummary({
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* Save as Template section */}
+        {onSaveAsTemplate && !templateSaved && (
+          <div className="mb-4 rounded-xl bg-surface p-4">
+            {!showTemplateSave ? (
+              <button
+                type="button"
+                onClick={() => setShowTemplateSave(true)}
+                className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-lg border border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-400 active:opacity-70 transition-opacity"
+              >
+                {/* Bookmark icon */}
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+                </svg>
+                Save as Template
+              </button>
+            ) : (
+              <div className="flex flex-col gap-3">
+                <p className="text-sm font-medium text-on-surface">
+                  Template Name
+                </p>
+                <input
+                  type="text"
+                  value={templateName}
+                  onChange={(e) => setTemplateName(e.target.value)}
+                  placeholder="e.g. Push Day"
+                  maxLength={200}
+                  className="w-full rounded-lg bg-zinc-800 px-4 py-3 text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowTemplateSave(false)}
+                    className="flex min-h-[44px] flex-1 items-center justify-center rounded-lg bg-zinc-800 px-4 py-2 text-sm font-medium text-zinc-400 active:opacity-70 transition-opacity"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSaveTemplate}
+                    disabled={!templateName.trim() || savingTemplate}
+                    className="flex min-h-[44px] flex-1 items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-on-primary disabled:opacity-50 active:opacity-80 transition-opacity"
+                  >
+                    {savingTemplate ? (
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-on-primary border-t-transparent" />
+                    ) : (
+                      'Save'
+                    )}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {templateSaved && (
+          <div className="mb-4 rounded-xl bg-green-900/30 p-3 text-center text-sm text-green-400">
+            Template saved!
           </div>
         )}
 

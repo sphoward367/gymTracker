@@ -1,11 +1,17 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 
 import { useWorkout } from '@/contexts/WorkoutContext';
+import { useTimer } from '@/contexts/TimerContext';
+import { useAuth } from '@/contexts/AuthContext';
 import type { Exercise } from '@/types/exercise';
+import type { TemplateExercise } from '@/types/workout';
 import { workoutVolume } from '@/utils/calculations';
+import { templateService } from '@/services/templates/templateService';
 import { ExerciseCard } from '@/components/workout/ExerciseCard';
 import { AddExerciseModal } from '@/components/workout/AddExerciseModal';
 import { WorkoutSummary } from '@/components/workout/WorkoutSummary';
+import { TimerBar } from '@/components/timer/TimerBar';
 
 function formatElapsedTime(seconds: number): string {
   const hrs = Math.floor(seconds / 3600);
@@ -36,6 +42,10 @@ export default function ActiveWorkout() {
     cancelWorkout,
     isExercisePR,
   } = useWorkout();
+
+  const { timerState, startTimer, adjustTimer, skipTimer } = useTimer();
+  const { user } = useAuth();
+  const location = useLocation();
 
   const [showAddExercise, setShowAddExercise] = useState(false);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
@@ -72,6 +82,36 @@ export default function ActiveWorkout() {
     };
   }, [state.status, state.startedAt]);
 
+  // Template initialisation — start workout from route state (runs once on mount)
+  const hasInitializedTemplate = useRef(false);
+  useEffect(() => {
+    if (hasInitializedTemplate.current) return;
+    const routeState = location.state as {
+      templateId?: string;
+      templateName?: string;
+      exercises?: TemplateExercise[];
+    } | null;
+    if (!routeState?.exercises?.length) return;
+    hasInitializedTemplate.current = true;
+    startWorkout(routeState.templateId, routeState.templateName);
+  }, [location.state, startWorkout]);
+
+  // Once workout is active and came from template, add template exercises (runs once)
+  const hasAddedTemplateExercises = useRef(false);
+  useEffect(() => {
+    if (state.status !== 'active' || hasAddedTemplateExercises.current) return;
+    const routeState = location.state as {
+      templateId?: string;
+      templateName?: string;
+      exercises?: TemplateExercise[];
+    } | null;
+    if (!routeState?.exercises?.length) return;
+    hasAddedTemplateExercises.current = true;
+    for (const ex of routeState.exercises) {
+      addExercise(ex.exerciseId, ex.exerciseName, ex.restDuration);
+    }
+  }, [state.status, location.state, addExercise]);
+
   const handleAddExercise = useCallback(
     (exercise: Exercise) => {
       addExercise(exercise.id, exercise.name);
@@ -82,6 +122,22 @@ export default function ActiveWorkout() {
   const handleFinish = useCallback(() => {
     completeWorkout();
   }, [completeWorkout]);
+
+  // Get the rest duration from the most recently added exercise (or default 90s)
+  const defaultRestDuration = state.exercises.at(-1)?.restDuration ?? 90;
+
+  const handleStartRest = useCallback(() => {
+    const lastExercise = state.exercises.at(-1);
+    startTimer(lastExercise?.restDuration ?? 90, lastExercise?.exerciseId ?? '');
+  }, [state.exercises, startTimer]);
+
+  const handleSaveAsTemplate = useCallback(
+    async (name: string) => {
+      if (!user) return;
+      await templateService.createTemplate(user.uid, name, state.exercises);
+    },
+    [user, state.exercises],
+  );
 
   const totalVolume = useMemo(() => {
     return workoutVolume(state.exercises);
@@ -118,7 +174,7 @@ export default function ActiveWorkout() {
           </p>
           <button
             type="button"
-            onClick={startWorkout}
+            onClick={() => startWorkout()}
             className="flex min-h-[44px] w-full items-center justify-center rounded-xl bg-primary px-6 py-4 text-lg font-semibold text-on-primary active:opacity-80 transition-opacity"
           >
             Start Empty Workout
@@ -138,6 +194,7 @@ export default function ActiveWorkout() {
         prsAchieved={state.prsAchieved}
         onSave={finishWorkout}
         onDiscard={cancelWorkout}
+        onSaveAsTemplate={handleSaveAsTemplate}
       />
     );
   }
@@ -150,19 +207,31 @@ export default function ActiveWorkout() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-lg font-bold text-on-surface">
-              Active Workout
+              {state.templateName ?? 'Active Workout'}
             </h1>
-            <p className="text-sm font-mono text-zinc-400">
+            <p className="font-mono text-sm text-zinc-400">
               {formatElapsedTime(elapsedSeconds)}
             </p>
           </div>
-          <button
-            type="button"
-            onClick={handleFinish}
-            className="flex min-h-[44px] items-center justify-center rounded-xl bg-primary px-5 py-2 text-sm font-semibold text-on-primary active:opacity-80 transition-opacity"
-          >
-            Finish
-          </button>
+          <div className="flex items-center gap-2">
+            {state.exercises.length > 0 && !timerState.isRunning && (
+              <button
+                type="button"
+                onClick={handleStartRest}
+                className="flex min-h-[44px] items-center justify-center rounded-xl bg-zinc-700 px-4 py-2 text-sm font-medium text-zinc-200 active:opacity-70 transition-opacity"
+                aria-label={`Start ${defaultRestDuration}s rest timer`}
+              >
+                Rest {defaultRestDuration}s
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={handleFinish}
+              className="flex min-h-[44px] items-center justify-center rounded-xl bg-primary px-5 py-2 text-sm font-semibold text-on-primary active:opacity-80 transition-opacity"
+            >
+              Finish
+            </button>
+          </div>
         </div>
       </div>
 
@@ -216,6 +285,13 @@ export default function ActiveWorkout() {
           Add Exercise
         </button>
       </div>
+
+      {/* Rest Timer Bar (fixed position above bottom nav) */}
+      <TimerBar
+        timerState={timerState}
+        onAdjust={adjustTimer}
+        onSkip={skipTimer}
+      />
 
       {/* Add Exercise Modal */}
       <AddExerciseModal
