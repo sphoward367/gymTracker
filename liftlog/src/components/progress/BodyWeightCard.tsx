@@ -7,7 +7,7 @@ import {
   YAxis,
   Tooltip,
   CartesianGrid,
-  type TooltipProps,
+  type TooltipContentProps,
 } from 'recharts';
 import { bodyWeightService } from '@/services/bodyWeight/bodyWeightService';
 import type { BodyWeightEntry } from '@/types/user';
@@ -35,7 +35,7 @@ function todayDateString(): string {
  * Custom Recharts tooltip rendered with Tailwind classes only — no inline styles.
  * The `payload` and `label` props are provided by Recharts at runtime.
  */
-function ChartTooltip({ active, payload, label }: TooltipProps<number, string>) {
+function ChartTooltip({ active, payload, label }: TooltipContentProps<number, string>) {
   if (!active || !payload || payload.length === 0) return null;
   const raw = payload[0]?.value;
   const num = typeof raw === 'number' ? raw : parseFloat(String(raw ?? ''));
