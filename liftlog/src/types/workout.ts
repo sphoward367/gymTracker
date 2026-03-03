@@ -16,16 +16,21 @@ export interface WorkoutExercise {
   sets: WorkoutSet[];
   restDuration: number;
   notes?: string;
+  /** Display-only: previous session's sets. Stripped before saving to Firestore. */
+  previousSets?: WorkoutSet[];
 }
 
 /** PR detected during a workout session */
 export interface WorkoutPR {
   exerciseId: string;
   exerciseName: string;
+  prType: 'weight' | 'volume';
   previousWeight: number;
   newWeight: number;
   reps: number;
   estimated1RM: number;
+  previousVolume: number;
+  newVolume: number;
 }
 
 export interface Workout {
@@ -64,6 +69,8 @@ export interface PersonalRecord {
   maxWeight: number;
   maxWeightReps: number;
   estimated1RM: number;
+  /** Optional — not present on older Firestore documents. */
+  maxVolume?: number;
   achievedAt: Timestamp | Date;
   workoutId: string;
 }

@@ -59,6 +59,7 @@ export function WorkoutSummary({
       await onSave();
     } catch (err) {
       console.error('Failed to save workout:', err);
+    } finally {
       setSaving(false);
     }
   }, [onSave]);
@@ -148,39 +149,67 @@ export function WorkoutSummary({
               </h2>
             </div>
             <div className="flex flex-col gap-2">
-              {prsAchieved.map((pr, index) => (
-                <div
-                  key={index}
-                  className="flex items-center justify-between rounded-lg bg-black/20 px-3 py-2"
-                >
-                  <span className="text-sm font-medium text-on-surface">
-                    {pr.exerciseName}
-                  </span>
-                  <div className="flex items-center gap-1 text-sm">
-                    <span className="text-zinc-400 line-through">
-                      {pr.previousWeight}kg
-                    </span>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="14"
-                      height="14"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="text-pr-gold"
-                    >
-                      <polyline points="7 17 17 7" />
-                      <polyline points="7 7 17 7 17 17" />
-                    </svg>
-                    <span className="font-bold text-pr-gold">
-                      {pr.newWeight}kg &times; {pr.reps}
-                    </span>
+              {prsAchieved.map((pr, index) =>
+                pr.prType === 'weight' ? (
+                  <div
+                    key={index}
+                    className="flex items-center justify-between rounded-lg bg-black/20 px-3 py-2"
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-xs font-medium text-zinc-500 shrink-0">WT</span>
+                      <span className="truncate text-sm font-medium text-on-surface">{pr.exerciseName}</span>
+                    </div>
+                    <div className="flex items-center gap-1 text-sm shrink-0 ml-2">
+                      <span className="text-zinc-400 line-through">{pr.previousWeight}kg</span>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="text-pr-gold"
+                      >
+                        <polyline points="7 17 17 7" />
+                        <polyline points="7 7 17 7 17 17" />
+                      </svg>
+                      <span className="font-bold text-pr-gold">{pr.newWeight}kg &times; {pr.reps}</span>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ) : (
+                  <div
+                    key={index}
+                    className="flex items-center justify-between rounded-lg bg-black/20 px-3 py-2"
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-xs font-medium text-blue-400 shrink-0">VOL</span>
+                      <span className="truncate text-sm font-medium text-on-surface">{pr.exerciseName}</span>
+                    </div>
+                    <div className="flex items-center gap-1 text-sm shrink-0 ml-2">
+                      <span className="text-zinc-400">{Math.round(pr.previousVolume)} kg</span>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="text-pr-gold"
+                      >
+                        <polyline points="7 17 17 7" />
+                        <polyline points="7 7 17 7 17 17" />
+                      </svg>
+                      <span className="font-bold text-pr-gold">{Math.round(pr.newVolume)} kg</span>
+                    </div>
+                  </div>
+                ),
+              )}
             </div>
           </div>
         )}

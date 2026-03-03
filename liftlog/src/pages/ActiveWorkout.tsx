@@ -5,9 +5,10 @@ import { useWorkout } from '@/contexts/WorkoutContext';
 import { useTimer } from '@/contexts/TimerContext';
 import { useAuth } from '@/contexts/AuthContext';
 import type { Exercise } from '@/types/exercise';
-import type { TemplateExercise } from '@/types/workout';
+import type { TemplateExercise, WorkoutSet } from '@/types/workout';
 import { workoutVolume } from '@/utils/calculations';
 import { templateService } from '@/services/templates/templateService';
+import { workoutService } from '@/services/workouts/workoutService';
 import { ExerciseCard } from '@/components/workout/ExerciseCard';
 import { AddExerciseModal } from '@/components/workout/AddExerciseModal';
 import { WorkoutSummary } from '@/components/workout/WorkoutSummary';
@@ -113,10 +114,18 @@ export default function ActiveWorkout() {
   }, [state.status, location.state, addExercise]);
 
   const handleAddExercise = useCallback(
-    (exercise: Exercise) => {
-      addExercise(exercise.id, exercise.name);
+    async (exercise: Exercise) => {
+      if (!user) return;
+      let previousSets: WorkoutSet[] | undefined;
+      try {
+        const lastEntry = await workoutService.getLastSetsForExercise(user.uid, exercise.id);
+        previousSets = lastEntry?.sets;
+      } catch (err) {
+        console.error('Failed to load previous sets:', err);
+      }
+      addExercise(exercise.id, exercise.name, undefined, previousSets);
     },
-    [addExercise],
+    [addExercise, user],
   );
 
   const handleFinish = useCallback(() => {
@@ -204,21 +213,21 @@ export default function ActiveWorkout() {
     <div className="min-h-screen bg-background pb-20">
       {/* Header */}
       <div className="sticky top-0 z-10 border-b border-zinc-800 bg-background/95 px-4 py-3 backdrop-blur-sm">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-lg font-bold text-on-surface">
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <h1 className="truncate text-lg font-bold text-on-surface">
               {state.templateName ?? 'Active Workout'}
             </h1>
             <p className="font-mono text-sm text-zinc-400">
               {formatElapsedTime(elapsedSeconds)}
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             {state.exercises.length > 0 && !timerState.isRunning && (
               <button
                 type="button"
                 onClick={handleStartRest}
-                className="flex min-h-[44px] items-center justify-center rounded-xl bg-zinc-700 px-4 py-2 text-sm font-medium text-zinc-200 active:opacity-70 transition-opacity"
+                className="flex min-h-[44px] items-center justify-center rounded-xl bg-zinc-700 px-3 py-2 text-sm font-medium text-zinc-200 active:opacity-70 transition-opacity"
                 aria-label={`Start ${defaultRestDuration}s rest timer`}
               >
                 Rest {defaultRestDuration}s
@@ -227,7 +236,7 @@ export default function ActiveWorkout() {
             <button
               type="button"
               onClick={handleFinish}
-              className="flex min-h-[44px] items-center justify-center rounded-xl bg-primary px-5 py-2 text-sm font-semibold text-on-primary active:opacity-80 transition-opacity"
+              className="flex min-h-[44px] items-center justify-center rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-on-primary active:opacity-80 transition-opacity"
             >
               Finish
             </button>

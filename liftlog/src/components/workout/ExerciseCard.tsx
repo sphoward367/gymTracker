@@ -174,6 +174,7 @@ export function ExerciseCard({
             set={set}
             exerciseIndex={exerciseIndex}
             setIndex={setIndex}
+            previousSet={exercise.previousSets?.[setIndex]}
             onUpdate={onUpdateSet}
             onComplete={onCompleteSet}
             onTypeChange={onSetTypeChange}

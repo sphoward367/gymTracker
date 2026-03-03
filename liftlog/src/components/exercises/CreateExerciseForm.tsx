@@ -22,6 +22,7 @@ const EQUIPMENT_OPTIONS = [
   'Barbell',
   'Dumbbell',
   'Machine',
+  'Smith Machine',
   'Cable',
   'Bodyweight',
   'Other',
@@ -43,6 +44,14 @@ export function CreateExerciseForm({
     const trimmedName = name.trim();
     if (!trimmedName) {
       setError('Exercise name is required');
+      return;
+    }
+    if (!BODY_PART_OPTIONS.includes(bodyPart)) {
+      setError('Invalid body part selected');
+      return;
+    }
+    if (!EQUIPMENT_OPTIONS.includes(equipment)) {
+      setError('Invalid equipment selected');
       return;
     }
 
@@ -161,6 +170,7 @@ export function CreateExerciseForm({
       {/* Actions */}
       <div className="flex gap-3 pt-2">
         <button
+          type="button"
           onClick={onCancel}
           disabled={saving}
           className="flex-1 min-h-[44px] rounded-lg bg-surface-variant px-4 py-3 font-medium text-on-surface active:opacity-80 transition-opacity disabled:opacity-50"
@@ -168,7 +178,8 @@ export function CreateExerciseForm({
           Cancel
         </button>
         <button
-          onClick={handleSubmit}
+          type="button"
+          onClick={() => void handleSubmit()}
           disabled={saving}
           className="flex-1 min-h-[44px] rounded-lg bg-primary px-4 py-3 font-medium text-on-primary active:opacity-80 transition-opacity disabled:opacity-50"
         >

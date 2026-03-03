@@ -6,6 +6,7 @@ interface SetRowProps {
   set: WorkoutSet;
   exerciseIndex: number;
   setIndex: number;
+  previousSet?: WorkoutSet;
   onUpdate: (exerciseIndex: number, setIndex: number, updates: Partial<WorkoutSet>) => void;
   onComplete: (exerciseIndex: number, setIndex: number) => void;
   onTypeChange: (exerciseIndex: number, setIndex: number, type: SetType) => void;
@@ -24,6 +25,7 @@ export function SetRow({
   set,
   exerciseIndex,
   setIndex,
+  previousSet,
   onUpdate,
   onComplete,
   onTypeChange,
@@ -95,8 +97,8 @@ export function SetRow({
         inputMode="decimal"
         value={set.weight || ''}
         onChange={handleWeightChange}
-        placeholder="0"
-        className="min-h-[44px] w-16 rounded-lg bg-zinc-800 px-2 text-center text-sm text-on-surface placeholder:text-zinc-600 focus:ring-2 focus:ring-primary focus:outline-none"
+        placeholder={previousSet?.weight ? String(previousSet.weight) : '0'}
+        className="min-h-[44px] w-16 rounded-lg bg-zinc-800 px-2 text-center text-base text-on-surface placeholder:text-zinc-600 focus:ring-2 focus:ring-primary focus:outline-none"
         aria-label="Weight"
       />
 
@@ -109,8 +111,8 @@ export function SetRow({
         inputMode="numeric"
         value={set.reps || ''}
         onChange={handleRepsChange}
-        placeholder="0"
-        className="min-h-[44px] w-14 rounded-lg bg-zinc-800 px-2 text-center text-sm text-on-surface placeholder:text-zinc-600 focus:ring-2 focus:ring-primary focus:outline-none"
+        placeholder={previousSet?.reps ? String(previousSet.reps) : '0'}
+        className="min-h-[44px] w-14 rounded-lg bg-zinc-800 px-2 text-center text-base text-on-surface placeholder:text-zinc-600 focus:ring-2 focus:ring-primary focus:outline-none"
         aria-label="Reps"
       />
 

@@ -1,13 +1,31 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { exerciseService } from '@/services/exercises/exerciseService';
 import { customExerciseService } from '@/services/exercises/customExerciseService';
+import { workoutService } from '@/services/workouts/workoutService';
+import { userExerciseStatsService } from '@/services/exercises/userExerciseStatsService';
 import { useAuth } from '@/contexts/AuthContext';
 import type { Exercise } from '@/types/exercise';
 import { ExerciseSearch } from '@/components/exercises/ExerciseSearch';
 import { ExerciseList } from '@/components/exercises/ExerciseList';
 import { CreateExerciseForm } from '@/components/exercises/CreateExerciseForm';
+
+function sortExercises(
+  exercises: Exercise[],
+  favouriteIds: Set<string>,
+  usageCounts: Map<string, number>,
+): Exercise[] {
+  return [...exercises].sort((a, b) => {
+    const aFav = favouriteIds.has(a.id) ? 1 : 0;
+    const bFav = favouriteIds.has(b.id) ? 1 : 0;
+    if (aFav !== bFav) return bFav - aFav;
+    const aCount = usageCounts.get(a.id) ?? 0;
+    const bCount = usageCounts.get(b.id) ?? 0;
+    if (aCount !== bCount) return bCount - aCount;
+    return a.name.localeCompare(b.name);
+  });
+}
 
 export default function ExerciseLibrary() {
   const navigate = useNavigate();
@@ -19,6 +37,10 @@ export default function ExerciseLibrary() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedBodyPart, setSelectedBodyPart] = useState<string | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [favouriteIds, setFavouriteIds] = useState<Set<string>>(
+    () => userExerciseStatsService.getFavourites(),
+  );
+  const [usageCounts, setUsageCounts] = useState<Map<string, number>>(new Map());
 
   // Load filter options on mount
   useEffect(() => {
@@ -32,6 +54,22 @@ export default function ExerciseLibrary() {
       }
     }
     void loadBodyParts();
+    return () => { cancelled = true; };
+  }, [user?.uid]);
+
+  // Load exercise usage counts
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    async function loadUsageCounts() {
+      try {
+        const counts = await workoutService.getExerciseUsageCounts(user!.uid);
+        if (!cancelled) setUsageCounts(counts);
+      } catch (err) {
+        console.error('Failed to load exercise usage counts:', err);
+      }
+    }
+    void loadUsageCounts();
     return () => { cancelled = true; };
   }, [user?.uid]);
 
@@ -59,6 +97,16 @@ export default function ExerciseLibrary() {
     void searchExercises();
     return () => { cancelled = true; };
   }, [searchQuery, selectedBodyPart, user?.uid]);
+
+  const sortedExercises = useMemo(
+    () => sortExercises(exercises, favouriteIds, usageCounts),
+    [exercises, favouriteIds, usageCounts],
+  );
+
+  const handleToggleFavourite = useCallback((exerciseId: string) => {
+    userExerciseStatsService.toggleFavourite(exerciseId);
+    setFavouriteIds(userExerciseStatsService.getFavourites());
+  }, []);
 
   const handleExercisePress = useCallback(
     (exercise: Exercise) => {
@@ -112,6 +160,7 @@ export default function ExerciseLibrary() {
         {bodyParts.map((part) => (
           <button
             key={part}
+            type="button"
             onClick={() => handleFilterPress(part)}
             className={`flex-shrink-0 rounded-full px-4 py-2.5 text-sm font-medium transition-colors min-h-[44px] ${
               selectedBodyPart === part
@@ -126,9 +175,11 @@ export default function ExerciseLibrary() {
 
       {/* Exercise list */}
       <ExerciseList
-        exercises={exercises}
+        exercises={sortedExercises}
         loading={loading}
         onExercisePress={handleExercisePress}
+        favouriteIds={favouriteIds}
+        onToggleFavourite={handleToggleFavourite}
       />
 
       {/* FAB - Create exercise */}

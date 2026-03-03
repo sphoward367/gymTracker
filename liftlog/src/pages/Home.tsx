@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { templateService } from '@/services/templates/templateService';
+import { templateDraftStorage } from '@/utils/templateDraftStorage';
 import type { Template } from '@/types/workout';
 
 export default function Home() {
@@ -11,6 +12,14 @@ export default function Home() {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  // Redirect back to template creation if there's an unsaved draft
+  useEffect(() => {
+    const draft = templateDraftStorage.loadDraft();
+    if (draft && (draft.name.trim() !== '' || draft.exercises.length > 0)) {
+      navigate('/templates/new', { replace: true });
+    }
+  }, [navigate]);
 
   useEffect(() => {
     if (!user) {

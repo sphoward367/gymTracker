@@ -28,7 +28,8 @@ function isPersonalRecord(data: unknown): data is Omit<PersonalRecord, 'id'> {
     typeof d['maxWeightReps'] === 'number' &&
     typeof d['estimated1RM'] === 'number' &&
     typeof d['workoutId'] === 'string' &&
-    achievedAtValid
+    achievedAtValid &&
+    (d['maxVolume'] === undefined || typeof d['maxVolume'] === 'number')
   );
 }
 
@@ -58,6 +59,7 @@ export const prService = {
       maxWeight: pr.maxWeight,
       maxWeightReps: pr.maxWeightReps,
       estimated1RM: pr.estimated1RM,
+      ...(pr.maxVolume !== undefined ? { maxVolume: pr.maxVolume } : {}),
       achievedAt: pr.achievedAt instanceof Date
         ? Timestamp.fromDate(pr.achievedAt)
         : pr.achievedAt,
