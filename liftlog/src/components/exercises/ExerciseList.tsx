@@ -10,6 +10,8 @@ interface ExerciseListProps {
   /** Optional secondary action. When provided, the row body fires onExercisePress
    *  and a separate info button fires onExerciseInfoPress. */
   onExerciseInfoPress?: (exercise: Exercise) => void;
+  favouriteIds?: Set<string>;
+  onToggleFavourite?: (exerciseId: string) => void;
 }
 
 const ROW_HEIGHT = 64;
@@ -20,6 +22,8 @@ export function ExerciseList({
   loading,
   onExercisePress,
   onExerciseInfoPress,
+  favouriteIds,
+  onToggleFavourite,
 }: ExerciseListProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [scrollTop, setScrollTop] = useState(0);
@@ -80,6 +84,22 @@ export function ExerciseList({
     );
   }
 
+  const HeartIcon = ({ filled }: { filled: boolean }) => (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill={filled ? 'currentColor' : 'none'}
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+    </svg>
+  );
+
   const totalHeight = exercises.length * ROW_HEIGHT;
   const startIndex = Math.max(
     0,
@@ -139,6 +159,21 @@ export function ExerciseList({
                 >
                   {exerciseContent}
                 </button>
+                {onToggleFavourite && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onToggleFavourite(exercise.id);
+                    }}
+                    className={`flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center px-2 transition-colors ${
+                      favouriteIds?.has(exercise.id) ? 'text-pr-gold' : 'text-zinc-600 active:text-zinc-300'
+                    }`}
+                    aria-label={favouriteIds?.has(exercise.id) ? `Remove ${exercise.name} from favourites` : `Add ${exercise.name} to favourites`}
+                  >
+                    <HeartIcon filled={favouriteIds?.has(exercise.id) ?? false} />
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() => onExerciseInfoPress(exercise)}
@@ -167,29 +202,49 @@ export function ExerciseList({
 
           // Single mode: whole row navigates to detail (library)
           return (
-            <button
+            <div
               key={exercise.id}
-              type="button"
-              onClick={() => onExercisePress(exercise)}
-              className="absolute left-0 right-0 flex items-center gap-3 border-b border-zinc-800/50 px-4 min-h-11 text-left active:bg-surface-variant/50 transition-colors"
+              className="absolute left-0 right-0 flex items-center border-b border-zinc-800/50"
               style={rowStyle}
             >
-              {exerciseContent}
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="flex-shrink-0 text-zinc-600"
+              <button
+                type="button"
+                onClick={() => onExercisePress(exercise)}
+                className="flex flex-1 items-center gap-3 overflow-hidden px-4 h-full text-left active:bg-surface-variant/50 transition-colors"
+                aria-label={`View ${exercise.name} details`}
               >
-                <polyline points="9 18 15 12 9 6" />
-              </svg>
-            </button>
+                {exerciseContent}
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="flex-shrink-0 text-zinc-600"
+                >
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </button>
+              {onToggleFavourite && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onToggleFavourite(exercise.id);
+                  }}
+                  className={`flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center px-2 transition-colors ${
+                    favouriteIds?.has(exercise.id) ? 'text-pr-gold' : 'text-zinc-600 active:text-zinc-300'
+                  }`}
+                  aria-label={favouriteIds?.has(exercise.id) ? `Remove ${exercise.name} from favourites` : `Add ${exercise.name} to favourites`}
+                >
+                  <HeartIcon filled={favouriteIds?.has(exercise.id) ?? false} />
+                </button>
+              )}
+            </div>
           );
         })}
       </div>

@@ -1,29 +1,77 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { templateService } from '@/services/templates/templateService';
 import { useAuth } from '@/contexts/AuthContext';
 import type { Exercise } from '@/types/exercise';
 import { AddExerciseModal } from '@/components/workout/AddExerciseModal';
-
-interface TemplateExerciseEntry {
-  exerciseId: string;
-  exerciseName: string;
-  sets: number;
-  restDuration: number;
-}
+import { templateDraftStorage } from '@/utils/templateDraftStorage';
+import type { TemplateExercise } from '@/types/workout';
 
 export default function CreateTemplate() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
   const [name, setName] = useState('');
-  const [exercises, setExercises] = useState<TemplateExerciseEntry[]>([]);
+  const [exercises, setExercises] = useState<TemplateExercise[]>([]);
   const [showAddExercise, setShowAddExercise] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [confirmingExit, setConfirmingExit] = useState(false);
+
+  // Restore draft on mount
+  useEffect(() => {
+    const draft = templateDraftStorage.loadDraft();
+    if (draft) {
+      if (draft.name) setName(draft.name);
+      if (draft.exercises.length > 0) setExercises(draft.exercises);
+    }
+  }, []); // runs once on mount
+
+  const draftTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (draftTimerRef.current) clearTimeout(draftTimerRef.current);
+    draftTimerRef.current = setTimeout(() => {
+      templateDraftStorage.saveDraft({ name, exercises });
+    }, 400);
+    return () => {
+      if (draftTimerRef.current) clearTimeout(draftTimerRef.current);
+    };
+  }, [name, exercises]);
+
+  // Refs always hold latest values so the unmount effect can save without stale closure
+  const latestNameRef = useRef(name);
+  const latestExercisesRef = useRef(exercises);
+  latestNameRef.current = name;
+  latestExercisesRef.current = exercises;
+
+  // Set to true before any intentional clearDraft() call so the unmount save doesn't undo it
+  const discardedRef = useRef(false);
+
+  // Save immediately on unmount — guards against navigating away within the 400ms debounce window.
+  // Skipped when the user has deliberately saved or discarded.
+  useEffect(() => {
+    return () => {
+      if (!discardedRef.current) {
+        templateDraftStorage.saveDraft({ name: latestNameRef.current, exercises: latestExercisesRef.current });
+      }
+    };
+  }, []);
+
+  function handleBack() {
+    const hasContent = name.trim() !== '' || exercises.length > 0;
+    if (hasContent && !confirmingExit) {
+      setConfirmingExit(true);
+      return;
+    }
+    discardedRef.current = true;
+    templateDraftStorage.clearDraft();
+    navigate('/');
+  }
 
   const handleAddExercise = useCallback((exercise: Exercise) => {
+    setError(null);
     setExercises((prev) => {
       // Don't add duplicates
       if (prev.some((e) => e.exerciseId === exercise.id)) return prev;
@@ -37,9 +85,10 @@ export default function CreateTemplate() {
         },
       ];
     });
-  }, []);
+  }, [setError]);
 
   function handleRemoveExercise(index: number) {
+    setError(null);
     setExercises((prev) => prev.filter((_, i) => i !== index));
   }
 
@@ -86,6 +135,8 @@ export default function CreateTemplate() {
       }));
 
       await templateService.createTemplate(user.uid, trimmed, workoutExercises);
+      discardedRef.current = true;
+      templateDraftStorage.clearDraft();
       navigate('/');
     } catch (err) {
       console.error('Failed to save template:', err);
@@ -101,23 +152,29 @@ export default function CreateTemplate() {
       <div className="sticky top-0 z-10 flex items-center gap-3 border-b border-zinc-800 bg-background px-4 py-3">
         <button
           type="button"
-          onClick={() => navigate(-1)}
-          className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-on-surface active:opacity-80 transition-opacity"
-          aria-label="Back"
+          onClick={handleBack}
+          className={`flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg active:opacity-80 transition-opacity ${
+            confirmingExit ? 'text-error' : 'text-on-surface'
+          }`}
+          aria-label={confirmingExit ? 'Tap again to discard' : 'Back'}
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <polyline points="15 18 9 12 15 6" />
-          </svg>
+          {confirmingExit ? (
+            <span className="px-1 text-xs font-semibold">Discard?</span>
+          ) : (
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+          )}
         </button>
         <h1 className="text-lg font-semibold text-on-surface">Create Template</h1>
       </div>
@@ -127,7 +184,7 @@ export default function CreateTemplate() {
         <input
           type="text"
           value={name}
-          onChange={(e) => setName(e.target.value)}
+          onChange={(e) => { setName(e.target.value); if (error) setError(null); }}
           placeholder="Template name (e.g. Push Day)"
           maxLength={200}
           className="mb-4 min-h-[44px] w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-on-surface placeholder-zinc-500 focus:border-primary focus:outline-none"

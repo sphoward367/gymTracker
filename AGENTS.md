@@ -97,9 +97,14 @@ Refer to these for details (load only when needed):
 - Do NOT rely on background JS execution for the timer — use clock-diff recovery
 
 ## Current State (Update This!)
-**Last Updated:** 2026-02-19
-**Working On:** Phase 7 — Manual testing + commit remaining
-**Recently Completed:** Phase 7 code — ErrorBoundary (with sanitised error messages), SyncStatus offline banner, useOnlineStatus hook (race-condition safe), wired into main.tsx + App.tsx, dark mode consistency fixes (text-error token, History setLoading fix, BodyWeightCard type="button" + aria-label + min-w touch targets, Recharts h-[180px] + custom ChartTooltip). Phase 9 — Progress Charts + Body Weight Logging. BodyWeightEntry type, bodyWeightService (CRUD, local-date doc IDs, setDoc upsert), formatShortDate formatter, ExerciseCharts component (Est. 1RM + Volume tabs, Recharts), BodyWeightCard component (self-contained async state, pre-fill, chart), ExerciseDetail updated (20-entry history + charts), Profile updated (BodyWeightCard). Code review fixes: unsafe loggedAt cast + negative weight guard in bodyWeightService, weight range validation in logWeight, dead ternary in ExerciseCharts, Recharts Tooltip formatter runtime guard in both chart components, unhandled signOut rejection in Profile. TSC: 0 errors.
+**Last Updated:** 2026-03-03
+**Working On:** Nothing — ready to commit
+**Recently Completed:**
+- 7-task sprint + reviewer audit (see below for details)
+- Volume PR logic fix: detection now uses session total (sum of all completed working sets) instead of single-set weight×reps. Fires once when running total first exceeds stored maxVolume. finishWorkout saves true final session total at save time, not the value captured when PR first fired. WorkoutSummary volume PR display updated to show session totals (e.g. 500 kg → 1500 kg).
+- Template draft UX fix: Home.tsx now redirects to /templates/new on mount if an unsaved draft exists (name or exercises non-empty). CreateTemplate.tsx back button shows "Discard?" confirmation on first tap (clears draft + navigates home on second tap; resets if user edits). Unmount-save added via refs so draft is captured even if user navigates away within the 400ms debounce window.
+
+**7-task sprint summary:** volume PRs, Smith Machine equipment option, set placeholders (last used weights/reps), responsive header UI, template draft persistence, exercise favourites + usage-count sort, iOS input zoom fix. Reviewer audit resolved 14 warnings. New files: templateDraftStorage.ts, userExerciseStatsService.ts. Modified: workout.ts, prService.ts, WorkoutContext.tsx, draftStorage.ts, workoutService.ts, index.css, WorkoutSummary.tsx, SetRow.tsx, ExerciseCard.tsx, ActiveWorkout.tsx, CreateTemplate.tsx, ExerciseList.tsx, ExerciseLibrary.tsx, AddExerciseModal.tsx, CreateExerciseForm.tsx, Home.tsx. TSC: 0 errors.
 **Blocked By:** Nothing
 
 ## Roadmap

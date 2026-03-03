@@ -92,6 +92,22 @@ export const workoutService = {
     return workouts;
   },
 
+  async getExerciseUsageCounts(userId: string, max = 50): Promise<Map<string, number>> {
+    const q = query(workoutsRef(userId), orderBy('startedAt', 'desc'), limit(max));
+    const snapshot = await getDocs(q);
+    const counts = new Map<string, number>();
+    for (const docSnap of snapshot.docs) {
+      const data = docSnap.data();
+      if (!isWorkoutData(data)) continue;
+      for (const ex of data.exercises) {
+        if (typeof ex.exerciseId === 'string') {
+          counts.set(ex.exerciseId, (counts.get(ex.exerciseId) ?? 0) + 1);
+        }
+      }
+    }
+    return counts;
+  },
+
   async getLastSetsForExercise(
     userId: string,
     exerciseId: string,

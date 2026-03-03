@@ -44,3 +44,11 @@ body {
 .safe-top {
   padding-top: max(0.5rem, env(safe-area-inset-top));
 }
+
+/* Prevent iOS Safari from zooming on input focus — inputs must be font-size ≥ 16px.
+   Using !important so this baseline cannot be overridden by Tailwind text-sm utilities on inputs. */
+input,
+select,
+textarea {
+  font-size: 16px !important;
+}

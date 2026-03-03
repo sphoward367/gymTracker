@@ -92,32 +92,66 @@ function checkSetForPR(
   exerciseId: string,
   exerciseName: string,
   set: WorkoutSet,
+  exercise: WorkoutExercise,
   currentPR: PersonalRecord | undefined,
   existingPRs: WorkoutPR[],
-): WorkoutPR | null {
-  if (!set.completed || set.type === 'warmup' || set.weight <= 0) return null;
+): WorkoutPR[] {
+  if (!set.completed || set.type === 'warmup' || set.weight <= 0 || set.reps <= 0) return [];
 
-  const previousWeight = currentPR?.maxWeight ?? 0;
+  // Session total: all already-completed working sets + this set
+  const sessionVolume =
+    exercise.sets
+      .filter((s) => s.completed && s.type !== 'warmup' && s.weight > 0 && s.reps > 0)
+      .reduce((sum, s) => sum + s.weight * s.reps, 0) +
+    set.weight * set.reps;
 
-  // Also check prsAchieved from this session — use the highest weight recorded so far
-  const sessionBest = existingPRs
-    .filter((pr) => pr.exerciseId === exerciseId)
+  const previousMaxWeight = currentPR?.maxWeight ?? 0;
+  const previousMaxVolume = currentPR?.maxVolume ?? 0;
+
+  // Session-best weight tracking to avoid duplicate weight PRs within the same workout
+  const sessionBestWeight = existingPRs
+    .filter((pr) => pr.exerciseId === exerciseId && pr.prType === 'weight')
     .reduce((best, pr) => Math.max(best, pr.newWeight), 0);
 
-  const effectivePrevious = Math.max(previousWeight, sessionBest);
+  const effectiveMaxWeight = Math.max(previousMaxWeight, sessionBestWeight);
 
-  if (set.weight > effectivePrevious) {
-    return {
+  if (set.weight > effectiveMaxWeight) {
+    // Weight PR — always takes precedence
+    return [{
       exerciseId,
       exerciseName,
-      previousWeight,
+      prType: 'weight',
+      previousWeight: previousMaxWeight,
       newWeight: set.weight,
       reps: set.reps,
       estimated1RM: estimatedOneRepMax(set.weight, set.reps),
-    };
+      previousVolume: previousMaxVolume,
+      newVolume: sessionVolume,
+    }];
   }
 
-  return null;
+  // Volume PR — session total exceeds stored best; only fires once per exercise per session
+  const alreadyHasWeightPRThisSession = existingPRs.some(
+    (pr) => pr.exerciseId === exerciseId && pr.prType === 'weight',
+  );
+  const alreadyHasVolumePRThisSession = existingPRs.some(
+    (pr) => pr.exerciseId === exerciseId && pr.prType === 'volume',
+  );
+  if (!alreadyHasWeightPRThisSession && !alreadyHasVolumePRThisSession && sessionVolume > previousMaxVolume) {
+    return [{
+      exerciseId,
+      exerciseName,
+      prType: 'volume',
+      previousWeight: previousMaxWeight,
+      newWeight: set.weight,
+      reps: set.reps,
+      estimated1RM: estimatedOneRepMax(set.weight, set.reps),
+      previousVolume: previousMaxVolume,
+      newVolume: sessionVolume,
+    }];
+  }
+
+  return [];
 }
 
 // ---------------------------------------------------------------------------
@@ -162,6 +196,7 @@ function workoutReducer(state: WorkoutState, action: WorkoutAction): WorkoutStat
         exerciseName,
         sets: defaultSets,
         restDuration: restDuration ?? 90,
+        previousSets,
       };
 
       return {
@@ -205,10 +240,11 @@ function workoutReducer(state: WorkoutState, action: WorkoutAction): WorkoutStat
 
       // Check for PR
       const currentPR = state.personalRecords.get(exercise.exerciseId);
-      const pr = checkSetForPR(
+      const newPRs = checkSetForPR(
         exercise.exerciseId,
         exercise.exerciseName,
         completedSet,
+        exercise,
         currentPR,
         state.prsAchieved,
       );
@@ -225,7 +261,7 @@ function workoutReducer(state: WorkoutState, action: WorkoutAction): WorkoutStat
       return {
         ...state,
         exercises,
-        prsAchieved: pr ? [...state.prsAchieved, pr] : state.prsAchieved,
+        prsAchieved: newPRs.length > 0 ? [...state.prsAchieved, ...newPRs] : state.prsAchieved,
       };
     }
 
@@ -511,7 +547,7 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
           userId: user.uid,
           templateId: state.templateId,
           templateName: state.templateName,
-          exercises: state.exercises,
+          exercises: state.exercises.map(({ previousSets: _prev, ...rest }) => rest),
           startedAt: state.startedAt,
           durationSeconds,
           totalVolume,
@@ -520,14 +556,29 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
         state.workoutId ?? undefined,
       );
 
-      // Update personal records in Firestore
+      // Update personal records in Firestore — group by exerciseId to handle weight + volume PRs together
+      const prMap = new Map<string, { weight?: WorkoutPR; volume?: WorkoutPR }>();
       for (const pr of state.prsAchieved) {
+        const entry = prMap.get(pr.exerciseId) ?? {};
+        if (pr.prType === 'weight') entry.weight = pr;
+        else entry.volume = pr;
+        prMap.set(pr.exerciseId, entry);
+      }
+      for (const [exerciseId, { weight: weightPR, volume: volumePR }] of prMap) {
+        const existingPR = state.personalRecords.get(exerciseId);
+        // Compute final session volume at save time — the PR may have fired before more sets were completed
+        const finalSessionVolume =
+          state.exercises
+            .find((ex) => ex.exerciseId === exerciseId)
+            ?.sets.filter((s) => s.completed && s.type !== 'warmup' && s.weight > 0 && s.reps > 0)
+            .reduce((sum, s) => sum + s.weight * s.reps, 0) ?? 0;
         await prService.updatePersonalRecord(user.uid, {
-          exerciseId: pr.exerciseId,
-          exerciseName: pr.exerciseName,
-          maxWeight: pr.newWeight,
-          maxWeightReps: pr.reps,
-          estimated1RM: pr.estimated1RM,
+          exerciseId,
+          exerciseName: (weightPR ?? volumePR)!.exerciseName,
+          maxWeight: weightPR?.newWeight ?? existingPR?.maxWeight ?? 0,
+          maxWeightReps: weightPR?.reps ?? existingPR?.maxWeightReps ?? 0,
+          estimated1RM: weightPR?.estimated1RM ?? existingPR?.estimated1RM ?? 0,
+          maxVolume: Math.max(finalSessionVolume, existingPR?.maxVolume ?? 0),
           achievedAt: now,
           workoutId: savedId,
         });
@@ -547,7 +598,7 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
       // We don't dispatch RESET so the workout data is preserved
       throw err;
     }
-  }, [user, state.workoutId, state.startedAt, state.exercises, state.prsAchieved, state.templateId, state.templateName]);
+  }, [user, state.workoutId, state.startedAt, state.exercises, state.prsAchieved, state.personalRecords, state.templateId, state.templateName]);
 
   const cancelWorkout = useCallback(() => {
     draftStorage.clearDraft();

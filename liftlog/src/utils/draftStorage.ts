@@ -23,6 +23,7 @@ interface SerializablePersonalRecord {
   maxWeight: number;
   maxWeightReps: number;
   estimated1RM: number;
+  maxVolume?: number;
   achievedAt: string;
   workoutId: string;
 }
@@ -68,6 +69,7 @@ export const draftStorage = {
       maxWeight: number;
       maxWeightReps: number;
       estimated1RM: number;
+      maxVolume?: number;
       achievedAt: Date | { toDate: () => Date };
       workoutId: string;
     }>;
@@ -92,6 +94,7 @@ export const draftStorage = {
             maxWeight: pr.maxWeight,
             maxWeightReps: pr.maxWeightReps,
             estimated1RM: pr.estimated1RM,
+            maxVolume: pr.maxVolume,
             achievedAt:
               pr.achievedAt instanceof Date
                 ? pr.achievedAt.toISOString()
@@ -121,6 +124,7 @@ export const draftStorage = {
       maxWeight: number;
       maxWeightReps: number;
       estimated1RM: number;
+      maxVolume?: number;
       achievedAt: Date;
       workoutId: string;
     }>;
@@ -152,6 +156,7 @@ export const draftStorage = {
               maxWeight: pr.maxWeight,
               maxWeightReps: pr.maxWeightReps,
               estimated1RM: pr.estimated1RM,
+              maxVolume: pr.maxVolume,
               achievedAt: new Date(pr.achievedAt),
               workoutId: pr.workoutId,
             },
